@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Apple Emoji · 搜狗</string>
+    <string name="subtitle">LSPosed 模块。在 LSPosed 里启用本模块并勾选「搜狗输入法」作用域，切回输入法即可生效，不用重启手机，也不用给 root 授权。</string>
+    <string name="status_checking">正在检测 Hook 连接…</string>
+    <string name="btn_all">安装全部 · 10 组（3817 张）</string>
+    <string name="btn_core">只装 黄脸 / 符号 / 旗帜</string>
+    <string name="btn_restore">还原成安装前</string>
+    <string name="btn_ping">检查 LSPosed 是否生效</string>
+    <string name="log_title">运行日志</string>
+    <string name="xposed_desc">把搜狗输入法的表情面板换成 Apple 风格。素材取自 Apple Color Emoji（Unicode 16 / iOS 18.4），共 3817 张 64px 图，10 个分组。</string>
+
+    <string-array name="xposed_scope">
+        <item>com.sohu.inputmethod.sogou.xiaomi</item>
+        <item>com.sohu.inputmethod.sogou</item>
+    </string-array>
+</resources>

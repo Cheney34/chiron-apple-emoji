@@ -1,0 +1,4 @@
+# 阻止 Google Play 服务下发可更新字体包。
+# Android 12+ 会把下载的字体放进 /data/fonts，其优先级高于 /system/fonts，
+# 会让本模块的 overlay 完全失效（表现为"装了跟没装一样"）。
+ro.com.google.gmscore.font_provider.disabled=1

@@ -1,0 +1,45 @@
+Apple Color Emoji (Chiron 配套) —— 版权与授权声明
+==================================================
+模块版本：v5.1
+本文件随模块包一起分发，请勿删除。
+
+1. 本模块包含什么
+   - shell 脚本与安装逻辑（customize.sh / post-fs-data.sh / service.sh /
+     action.sh / uninstall.sh / scripts/diag.sh）
+     这部分代码以 MIT 协议发布，见仓库根目录 LICENSE。
+   - 一个由使用者自行构建的彩色 emoji 字体文件
+     （system/fonts/NotoColorEmoji.ttf）。
+
+2. 字体与美术资源
+   - 该字体中的彩色位图取自 Apple Color Emoji，著作权归 Apple Inc. 所有。
+   - Apple 未公开授权第三方再分发其 emoji 位图。本仓库不分发这些位图，
+     字体由使用者用 emoji-font/ 下的脚本从 emoji-datasource-apple 素材自行生成。
+   - 因此：本字体仅供个人在本机替换系统表情使用，不得商用、不得再分发、
+     不得随模块包公开提供下载。
+   - 如果你是从他人处获得本模块包（而不是自己构建），说明该分发行为
+     可能未获授权，请自行判断风险。
+
+3. 无担保
+   本模块会修改系统字体挂载与 Google Play 服务组件状态。作者不对任何
+   数据丢失、系统异常、保修失效承担责任。安装前请确认可以自行恢复
+   （卸载脚本 uninstall.sh 会尝试还原 GMS 字体服务与主题字体）。
+
+4. 卸载与还原
+   - 在 Root 管理器里卸载本模块，uninstall.sh 会自动执行：
+     · 把 service.sh 禁用过的 GMS 字体组件逐个 enable 回来
+     · 把主题目录里被覆盖的 emoji 字体还原成你原来那一份
+     · 把备份的 /data/fonts 放回去
+     · 卸掉 /system/fonts 上的 bind mount / overlay
+   - 还原用到的备份在 /data/adb/chiron_apple_emoji/backup/，
+     确认字体已还原后可手动删除。
+
+5. 第三方组件
+   - Google Play 服务（com.google.android.gms）：模块仅通过 pm disable
+     临时禁用其字体下载组件，不改动其任何文件。
+   - Noto Color Emoji：Android 系统自带，本模块以同名文件覆盖显示。
+
+---
+English summary: This module ships shell scripts (MIT) plus a color emoji font
+built locally by the user. The emoji artwork is Apple Color Emoji,
+copyright Apple Inc., and is NOT licensed for redistribution. Do not
+redistribute this font. Provided as-is, without warranty.

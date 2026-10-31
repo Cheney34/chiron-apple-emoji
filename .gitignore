@@ -1,0 +1,41 @@
+# 构建产物
+build/
+gen/
+classes/
+dex/
+*.apk
+*.apks
+*.mtz
+dist/
+
+# 构建输入（含第三方美术资源，不随仓库分发）
+lsposed-sogou/assets/payload.zip
+lsposed-sogou/libs/*.jar
+*.keystore
+*.jks
+# 例外：这个 debug 签名是 deliberately 入库的，见 lsposed-sogou/signing/README.md
+!lsposed-sogou/signing/debug.keystore
+
+# 字体二进制
+*.ttf
+*.otf
+*.ttc
+*.woff
+*.woff2
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# 编辑器 / 系统
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# 临时
+*.log
+*.tmp
+.tmp.png

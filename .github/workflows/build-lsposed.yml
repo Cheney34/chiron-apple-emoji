@@ -1,0 +1,162 @@
+# 自动构建 LSPosed 模块（搜狗表情面板替换）
+#
+# 设计要点：
+#   1. 素材不进仓库。Apple emoji 位图由 CI 现场从 npm 拉 emoji-datasource-apple，
+#      仓库只保存 10 份 info.xml 清单（纯文本）。
+#   2. XposedBridgeAPI 从 Maven Central 取，不占仓库体积。
+#   3. 签名密钥走 Secret。社区已分发的版本用的是固定 debug 签名，
+#      换签名会导致覆盖安装失败，所以要把同一份 keystore 存成 SIGNING_KEY_B64。
+#      没配这个 Secret 也能构建，只是会自动生成新签名。
+#
+# 触发方式：
+#   · 手动：Actions → 构建 LSPosed 模块 → Run workflow
+#   · 打标签：git tag v1.8 && git push origin v1.8 → 自动构建并发布 Release
+
+name: 构建 LSPosed 模块
+
+on:
+  workflow_dispatch:
+    inputs:
+      emoji_version:
+        description: 'emoji-datasource-apple 版本'
+        required: false
+        default: '16.0.0'
+        type: string
+      release:
+        description: '构建完是否发 Release（需先在仓库里打 tag）'
+        required: false
+        default: false
+        type: boolean
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+env:
+  TZ: Asia/Shanghai
+  EMOJI_PKG: emoji-datasource-apple
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+
+    steps:
+      - name: 检出仓库
+        uses: actions/checkout@v4
+
+      - name: 准备 JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: 准备 Python 依赖
+        run: |
+          python3 -m pip install --quiet --upgrade pip
+          python3 -m pip install --quiet pillow
+
+      - name: 拉取 Apple emoji 素材
+        env:
+          VER: ${{ inputs.emoji_version || '16.0.0' }}
+        run: |
+          set -euo pipefail
+          URL="https://registry.npmjs.org/${EMOJI_PKG}/-/${EMOJI_PKG}-${VER}.tgz"
+          echo "下载 $URL"
+          curl -fsSL --retry 3 --retry-delay 2 -o /tmp/emoji.tgz "$URL"
+          mkdir -p /tmp/emoji
+          tar xzf /tmp/emoji.tgz -C /tmp/emoji --strip-components=1
+          N=$(ls /tmp/emoji/img/apple/64/*.png | wc -l)
+          echo "素材 $N 张（64×64）"
+          [ "$N" -gt 3000 ] || { echo "素材数量异常，检查包结构"; exit 1; }
+
+      - name: 拉取 XposedBridgeAPI-82
+        run: |
+          set -euo pipefail
+          mkdir -p lsposed-sogou/libs
+          OUT=lsposed-sogou/libs/XposedBridgeAPI-82.jar
+          # 注意：repo1.maven.org 上并没有 de.robv.android.xposed:api:82（实测 404，
+          # 2026-10-31 run #1 就是死在这一步，curl exit 22）。改用镜像逐个尝试。
+          OK=0
+          for U in \
+            "https://maven.aliyun.com/repository/public/de/robv/android/xposed/api/82/api-82.jar" \
+            "https://repo.huaweicloud.com/repository/maven/de/robv/android/xposed/api/82/api-82.jar" \
+            "https://maven.aliyun.com/repository/jcenter/de/robv/android/xposed/api/82/api-82.jar" ; do
+            echo "尝试 $U"
+            rm -f "$OUT"
+            if curl -fsSL --retry 2 --retry-delay 2 -o "$OUT" "$U"; then
+              SZ=$(stat -c%s "$OUT")
+              if [ "$SZ" -gt 10000 ]; then
+                echo "OK $SZ 字节"
+                OK=1
+                break
+              fi
+              echo "  文件太小（$SZ 字节），不像 jar，继续试下一个"
+            fi
+          done
+          [ "$OK" -eq 1 ] || { echo "所有镜像都失败了"; exit 1; }
+          ls -l "$OUT"
+          # 粗校验：能解出 XposedBridge.class 才算真 jar
+          unzip -l "$OUT" | grep -q 'de/robv/android/xposed/XposedBridge.class' \
+            || { echo "jar 内容不对"; exit 1; }
+
+      - name: 生成 payload.zip
+        run: |
+          set -euo pipefail
+          python3 lsposed-sogou/tools/make_payload.py \
+            --src /tmp/emoji/img/apple/64 \
+            --out lsposed-sogou/assets/payload.zip \
+            --version 16.0
+
+      - name: 选择签名
+        env:
+          SIGNING_KEY_B64: ${{ secrets.SIGNING_KEY_B64 }}
+        run: |
+          set -euo pipefail
+          KS="$RUNNER_TEMP/debug.keystore"
+          if [ -n "${SIGNING_KEY_B64:-}" ]; then
+            echo "$SIGNING_KEY_B64" | base64 -d > "$KS"
+            echo "用 Secret 里的签名"
+          elif [ -f lsposed-sogou/signing/debug.keystore ]; then
+            cp lsposed-sogou/signing/debug.keystore "$KS"
+            echo "用仓库内的 debug 签名（可覆盖安装社区已分发版本）"
+          else
+            echo "没有签名可用，build.sh 会临时生成一份（无法覆盖安装旧版）"
+          fi
+          if [ -f "$KS" ]; then
+            echo "KEYSTORE=$KS" >> "$GITHUB_ENV"
+          fi
+
+      - name: 构建 APK
+        run: |
+          set -euo pipefail
+          export ANDROID_SDK="${ANDROID_HOME:-${ANDROID_SDK_ROOT}}"
+          echo "SDK=$ANDROID_SDK"
+          ls "$ANDROID_SDK/build-tools" || true
+          bash lsposed-sogou/build.sh
+
+      - name: 整理产物
+        run: |
+          set -euo pipefail
+          V=$(grep -oP 'versionName="\K[^"]+' lsposed-sogou/AndroidManifest.xml)
+          mkdir -p dist
+          cp lsposed-sogou/build/app-signed.apk "dist/AppleEmoji_Sogou_LSPosed_v${V}.apk"
+          ls -lh dist/
+
+      - name: 上传构建产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: lsposed-apk
+          path: dist/*.apk
+          retention-days: 30
+
+      - name: 发布 Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          # 用仓库里的正文，而不是 GitHub 自动生成的那段英文列表
+          name: ${{ github.ref_name }}
+          body_path: docs/release-notes.md
+          files: dist/*.apk

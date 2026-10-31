@@ -1,0 +1,72 @@
+# 变更记录
+
+版本号规则：项目、Root 模块、MTZ 主题共用同一个语义化版本号；emoji 字体资源单独编号（`Emoji-R6-HD` / `Emoji-R6-Compact`），因为同一发行版本下两条通道的位图档数本来就不同。
+
+---
+
+## 6.2 — 2026-10-31 — 首个正式版
+
+项目第一次对外发布：MTZ 主题首次带上 Apple Color Emoji，Root 模块脚本重写，搜狗 LSPosed 模块一并出 1.7。这一版的重点是把规格问题挡在构建入口 —— 256 色单档、advance 2550 的旧字体从此打不进 MTZ。
+
+### 新增与修正
+
+- **对外只报一个版本号 6.2**（审计 P1-9）。此前 Root 模块是 `v5.0`/`v5.1`、MTZ 是 `6.2`、搜狗模块是 `1.7`，同一个「Apple Emoji」名义下装着质量差 10 倍的两种字体，用户无从分辨。现在 `module.prop`（versionCode 9）、MTZ 文件名、`description.xml` 三处一致。
+- **`chiron-font/build_v6.py` 重写，加入发行前校验**。打包前用 fontTools 读一遍 emoji 字体，任一项不过就 `exit 1`（审计 P0-1、P0-2、P1-7、P1-8）：
+  - 位图档数 ≥ 2（单档会在缩放时发虚）
+  - 位图 PNG color type = 6（RGBA 真彩；256 色调色板直接拒绝）
+  - `advance width = 2400 / upem 2048`（否则图形只占格子 80%，看起来偏小、间距偏大）
+  - `cmap` 码位数 ≥ 1440、GSUB 含 `ccmp`
+  - 正文字体 `hhea.ascent = 1078`（低了说明没跑过 `fix_metrics.py`，电量数字会下沉 3px）
+- **`description.xml` 结构补齐**（P1-10）：`<version>` 与文件名同步，补 `<titles>` / `<authors>` / `<designers>` / `<descriptions>` 四个 locale 块，`title` 从 `Chiron Merriweather` 改为 `Chiron Emoji`，与项目名一致。
+- **根节点仍保留 `<MIUI-Theme>`，不改 `<theme>`**。审计报告建议改（两份参照包用的是 `<theme>`），但 v6.2 用 `<MIUI-Theme>` 在真机上已经装得上、跑得动。改错的后果是「装不上」，而收益只是「更符合规范」——在没有备用测试机可反复刷的情况下，这个交换不划算，先记在已知问题里。
+- **`emoji-font/build17.py` 的 `STRIKES` 支持环境变量覆盖**。MTZ 通道可以出双档真彩（`STRIKES=45,96`，约 55–60 MB），不再复用历史遗留的单档量化字体；Root 通道默认五档不变。
+- **README 修正**：原文写 `build17.py --src ... --out ...`，但脚本只认 `IMGDIR` / `JSONF` / `OUT` 环境变量，照着文档敲必然报错。已改为可执行的写法，并补了「当前版本」与「该装哪个」两张表。
+
+### 保持
+
+5.1 的全部安全修复（见下），以及搜狗 LSPosed 模块 1.7。
+
+### 附件说明
+
+本次 Release 附带的 MTZ 与 Root 模块是**实机验证过的历史构建**，与上面的源码改动不是同一次产出：
+
+| 附件 | 版本 | 与源码的差异 |
+|---|---|---|
+| `Chiron-Merriweather_v6.2_AppleEmoji.mtz` | 6.2 | 内含 emoji 位图仍是 256 色量化 + 单档 128px，advance width 2550（1.245 em）未归一，cmap 少 12 个码位 → 发糊、偏小、间距偏大 |
+| `AppleEmoji_Chiron_v5.0_hd.zip` | 5.0 | 缺 `uninstall.sh`，覆盖主题 emoji 前不备份，overlayfs 兜底默认开启（这三项 5.1 起才改） |
+
+APK（搜狗 LSPosed 1.7）由 CI 从源码构建，与源码一致。
+
+### 已知未做
+
+| 项 | 原因 |
+|---|---|
+| MTZ 包内没有授权声明 | 主题引擎对 `fonts/`、`preview/` 之外的条目容忍度未验证，往 zip 里塞 NOTICE 有装不上的风险（审计 §8 C-2）。授权说明只放在仓库与 Release 正文里 |
+| `pm disable` 仍会连带关掉 Google 字体下载 | 影响面比 P0 版本小（可卸载还原），但要彻底解决需要改成只清 `/data/fonts` 不 disable，留待实测 |
+| Root 模块在 HyperOS 的 EROFS 分区仍可能挂不上 | 平台限制，`post-fs-data.sh` 已把失败路径写成「不生效但不影响开机」 |
+
+---
+
+## 5.1 — 2026-10-31
+
+安全修复，对应审计报告 P0-3 / P0-4 / P0-5 / P0-6 与 P1-11。**只改脚本，不动字体二进制。**
+
+- **不再无备份删除**：`customize.sh` 里 `rm -rf /data/fonts` 改为整目录 `mv` 进 `/data/adb/chiron_apple_emoji/backup/install-<时间>/`；主题目录里的 emoji 字体先 `cp -p` 备份、**备份成功才覆盖**。每笔写进 `backup/journal.txt`。`post-fs-data.sh`、`action.sh` 里同样的删除一并改成 stash。
+- **`pm disable` 可逆**：`service.sh` 每禁一项记一行 `user=<uid> <组件>` 到 `disabled.list`（`grep -qxF` 去重，只记真正成功的）。
+- **新增 `uninstall.sh`**：按清单逐个 `pm enable`，还原主题字体与 `/data/fonts`，卸载 bind mount / overlay，清单改名 `.done`。
+- **overlayfs 回退收紧**：默认关闭，需 `touch /data/adb/chiron_apple_emoji/enable_overlay` 才尝试；加开机死循环熔断（`overlay_tried` 无对应 `overlay_confirmed` 则永久停用）；探测条件从「文件非空」升级为「基础字体可读 + `/system/fonts/*.ttf` 数量 ≥5 + emoji 已是本模块那份」，任一不满足立即 `umount -l`。
+- **新增 `NOTICE.txt`**，随包分发，说明位图版权归 Apple、未获再分发授权、仅限个人本机使用、卸载还原范围。
+- **`update-binary` 探测安装器**：按 `/data/adb/{magisk,ksu,ap}/util_functions.sh` 顺序找，找不到或没有 `install_module()` 就明确报错 `exit 1`，不再静默 `exit 0`（此前 APatch 下表现为「装了但什么都没装」）。
+- `scripts/diag.sh` 新增「可还原性」一节，打印备份目录、`disabled.list`、三个 overlay 标记。
+
+---
+
+## 5.0 — 2026-10-29
+
+Root 模块改真彩。v4 为压体积把位图 `quantize(256)`，Apple 脸部的径向渐变从 6231 色掉到 131 色，出现一圈圈色阶；v5 改回真彩 PNG32，与 Noto 官方同规格。5 档位图 38/53/70/96/150px，GSUB 连字 3553 条。
+
+---
+
+## 1.7 — 2026-10-30
+
+搜狗 LSPosed 模块：不再靠排序值「挪走」内置分组，改为在 `File.list()` 与 `ExpressionUtil.u()` 两处拦截，真正移除「组合」「拼装」两个分组，卸载即恢复。

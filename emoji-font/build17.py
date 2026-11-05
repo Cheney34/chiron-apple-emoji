@@ -19,7 +19,12 @@ from fontTools.feaLib.builder import addOpenTypeFeaturesFromString
 
 UPM = 2048
 ADV = 2400
-STRIKES = [32, 45, 60, 82, 128]
+# 档位可覆盖。两条通道的取舍：
+#   Root（/system/fonts，180 MB 单文件）→ 默认 32,45,60,82,128 五档
+#   MTZ（主题包，要压体积）            → STRIKES=45,96 双档真彩，约 55–60 MB
+# 档位再少就只剩一档，系统缩放到其他字号会发虚；不要回到 v6.2 那种单档 128 的写法。
+STRIKES = [int(x) for x in
+           os.environ.get("STRIKES", "32,45,60,82,128").split(",") if x.strip()]
 IMGDIR = os.environ.get("IMGDIR", "/root/work/emoji/img16")
 JSONF = os.environ.get("JSONF", "/root/work/emoji/emoji16.json")
 OUT = os.environ.get("OUT", "/root/work/emoji/NotoColorEmoji_v5.ttf")

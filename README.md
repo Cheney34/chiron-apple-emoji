@@ -6,6 +6,31 @@
 
 ---
 
+## 当前版本
+
+| 组件 | 版本 | 产物 |
+|---|---|---|
+| 项目 / Release | **6.2**（tag `v6.2`） | — |
+| MTZ 主题（免 Root） | 6.2 | `Chiron-Emoji-v6.2-MTZ.mtz` |
+| Root 模块 | 6.2（versionCode 9） | `Chiron-Emoji-v6.2-Root.zip` |
+| 搜狗 LSPosed 模块 | 1.7（versionCode 9） | `AppleEmoji_Sogou_LSPosed_v1.7.apk`（CI 构建） |
+| emoji 字体资源 | Emoji-R6-HD / Emoji-R6-Compact | 5 档真彩 / 双档真彩 |
+
+改动记录见 [CHANGELOG.md](CHANGELOG.md)。版本号规则：项目、Root、MTZ 共用同一个语义化版本；字体资源单独编号，因为同一个版本号下两条通道的位图档数不同。
+
+## 该装哪个
+
+| 你的情况 | 装什么 | 为什么 |
+|---|---|---|
+| 没 Root，只想让系统 emoji 变苹果 | **MTZ** | 走主题引擎运行时覆写，可一键切回，覆盖率比模块高 |
+| 有 Root（Magisk / KernelSU / APatch） | **Root 模块** | 直接改 `/system/fonts`，最彻底；但 HyperOS 的 EROFS 逻辑分区上可能挂不上，见下文 |
+| 搜狗输入法的表情面板也要换 | **+ LSPosed 模块** | 搜狗面板读自己的 `emojipackage` 资源，换字体对它无效 |
+| 酷安 / 微博里仍是安卓 emoji | 无解 | 这类 App 自带 emoji2-bundled 渲染器，任何系统级替换都无效 |
+
+⚠️ 两条通道都能用时，**优先 MTZ**：v5.0 时代的实测日志显示，模块在 HyperOS 4.0 上一次都没挂上（overlay 被 EROFS 挡掉），而同一台机器上的 MTZ 是有效的。
+
+---
+
 ## 五个子项目
 
 | 目录 | 做什么 | 产物 |
@@ -20,32 +45,56 @@
 
 ## 快速开始
 
+先把素材准备好，只需要一次：
+
+```bash
+# Apple emoji 位图 + 元数据（约 115 MB）
+npm pack emoji-datasource-apple@16.0.0 && tar -xf emoji-datasource-apple-16.0.0.tgz
+# 得到 package/img/apple/64（或 img-apple-160）
+```
+
 ### 1. 构建 emoji 字体
+
+`build17.py` 用环境变量读参数（不认命令行 flag）：
 
 ```bash
 cd emoji-font
 pip install fonttools pillow
-# 素材：Apple emoji 160px PNG（emoji-datasource-apple 的 img-apple-160 目录）
-python3 build17.py --src /path/to/img-apple-160 --out NotoColorEmoji.ttf
+
+# Root 通道：5 档真彩，约 188 MB
+IMGDIR=/path/to/img/apple/64 \
+JSONF=/path/to/emoji-data.json \
+OUT=../build/emoji/NotoColorEmoji-root.ttf \
+python3 build17.py
+
+# MTZ 通道：双档真彩，约 55–60 MB
+STRIKES=45,96 \
+IMGDIR=/path/to/img/apple/64 \
+JSONF=/path/to/emoji-data.json \
+OUT=../build/emoji/NotoColorEmoji-mtz.ttf \
+python3 build17.py
 ```
 
-### 2. 打包 Magisk 模块
+`STRIKES` 是唯一需要按通道区分的参数。**不要只给一档**——单档位图在系统把它缩放到别的字号时会发虚，v6.2 的 MTZ 就是踩了这个坑。
+
+### 2. 打包 Root 模块
 
 ```bash
 cd magisk-module
-cp /path/to/NotoColorEmoji.ttf system/fonts/
-zip -r ../AppleEmoji-Chiron.zip . -x '*.git*'
+mkdir -p system/fonts
+cp ../build/emoji/NotoColorEmoji-root.ttf system/fonts/NotoColorEmoji.ttf
+zip -r ../Chiron-Emoji-v6.2-Root.zip . -x '*/.git*' -x 'system/fonts/.gitkeep'
 ```
 
-刷入后重启。诊断：`/data/local/tmp/emoji_diag.txt`，或直接 `cat /data/adb/modules/*/post-fs.log`。
+刷入后重启。诊断：模块详情页点「执行」，或 `cat /data/adb/chiron_apple_emoji/post-fs.log`。
 
 ### 3. 构建 LSPosed 模块
 
+本地构建需要 `libs/XposedBridgeAPI-82.jar`，比较麻烦。**推荐直接让 CI 出包**：仓库 Actions → 「构建 LSPosed 模块」→ Run workflow，产物在 artifact 里。
+
 ```bash
 cd lsposed-sogou
-# 先按 libs/README.md 放好 XposedBridgeAPI-82.jar
-# payload.zip 含 Apple 位图，需自己生成：
-python3 tools/make_payload.py --src /path/to/img-apple-160 --out assets/payload.zip
+python3 tools/make_payload.py --src /path/to/img/apple/64 --out assets/payload.zip --version 16.0
 ./build.sh
 ```
 
@@ -55,8 +104,20 @@ python3 tools/make_payload.py --src /path/to/img-apple-160 --out assets/payload.
 
 ```bash
 cd chiron-font
-python3 build_v6.py   # 需要先准备好 Chiron 源字体和 Merriweather VF
+python3 build_v6.py \
+    --src-font ../build/mtz/fonts/Roboto-Regular.ttf \
+    --emoji    ../build/emoji/NotoColorEmoji-mtz.ttf \
+    --version  6.2 \
+    --out      ../Chiron-Emoji-v6.2-MTZ.mtz
 ```
+
+脚本打包前会先验三个必过项，不过就直接退出（不会给你一个「能装但难看」的包）：
+
+1. emoji **至少两档**、位图是 **RGBA 真彩**（256 色调色板会被拒）
+2. **advance width = 2400 / upem 2048**，否则图形只占格子 80%，看起来偏小、间距偏大
+3. 正文字体 **hhea.ascent = 1078**，否则状态栏电量数字下沉约 3px
+
+完整的构建与发版流程见 [docs/构建与发版.md](docs/构建与发版.md)。
 
 ---
 
@@ -97,6 +158,8 @@ version.json    版本串
 
 ## 文档
 
+- [构建与发版](docs/构建与发版.md) — 从源码到三个产物，以及发版前自查清单
+- [变更记录](CHANGELOG.md) — 每个版本改了什么、哪些已知问题还没做
 - [emoji 字体在 Android 上的三条通道](docs/emoji字体通道分析.md) — 为什么有的 App 换了字体没反应
 - [发行包审计报告](docs/审计报告.md) — 两版 emoji 字体的差异、脚本安全问题
 

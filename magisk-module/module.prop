@@ -1,6 +1,6 @@
 id=chiron_apple_emoji
 name=Apple Color Emoji (Chiron 配套)
-version=6.2
-versionCode=9
+version=v5.0 (真彩高清)
+versionCode=7
 author=Chiron Font Build
-description=把系统 emoji 换成 Apple Color Emoji（真彩 5 档：38/53/70/96/150px，GSUB ccmp 连字 3553 条，家庭/肤色/旗帜/键帽不拆开）。首个正式版：覆盖前先备份、卸载自动还原 GMS 字体服务与主题 emoji、overlay 兜底改为手动开启且带开机死循环熔断、安装器自动识别 Magisk / KernelSU / APatch。装完重启生效，卸载可还原。
+description=把系统 emoji 换成 Apple Color Emoji。v5.0 修复"发脏/发糊"的根因：v4 为压体积把位图量化成 256 色，Apple 脸部的径向渐变从 6231 色掉到 131 色，出现一圈圈色阶。本版改回真彩 PNG32，与 Noto 官方同规格；5 档位图 38/53/70/96/150px，GSUB 连字 3553 条，家庭/肤色/旗帜/键帽不拆开。KernelSU / Magisk / APatch 通用，随时可禁用还原。

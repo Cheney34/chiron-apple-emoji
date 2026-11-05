@@ -1,0 +1,29 @@
+#!/sbin/sh
+# 同时兼容 Magisk / KernelSU / APatch 的安装入口
+umask 022
+OUTFD="$2"
+ZIPFILE="$3"
+
+mount /data 2>/dev/null
+
+# Magisk 路径
+if [ -f /data/adb/magisk/util_functions.sh ]; then
+    . /data/adb/magisk/util_functions.sh
+    install_module
+    exit 0
+fi
+
+# KernelSU：正常情况下 KSU Manager 直接用 ksud 装包，不经过这里；
+# 从第三方 recovery 刷入时才走下面这条路
+if [ -x /data/adb/ksu/bin/ksud ]; then
+    /data/adb/ksu/bin/ksud module install "$ZIPFILE"
+    exit 0
+fi
+
+if command -v ksud >/dev/null 2>&1; then
+    ksud module install "$ZIPFILE"
+    exit 0
+fi
+
+echo "未检测到 Magisk 或 KernelSU，无法安装" >&2
+exit 1

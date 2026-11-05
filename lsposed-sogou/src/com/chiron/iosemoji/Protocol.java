@@ -22,10 +22,13 @@ public final class Protocol {
     public static final String EXTRA_CURRENT = "current";
     public static final String EXTRA_TOTAL = "total";
     public static final String EXTRA_MESSAGE = "message";
+    /** 逗号分隔的分组编号，配合 {@link #CMD_INSTALL_GROUPS} 使用。 */
+    public static final String EXTRA_GROUPS = "groups";
 
     public static final String CMD_PING = "ping";
     public static final String CMD_INSTALL_ALL = "install_all";
     public static final String CMD_INSTALL_CORE = "install_core";
+    public static final String CMD_INSTALL_GROUPS = "install_groups";
     public static final String CMD_RESTORE = "restore";
 
     /** 分组目录的编号范围，超出这个范围的文件一律不碰。 */

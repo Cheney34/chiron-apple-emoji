@@ -22,7 +22,7 @@ fi
 
 ui_print " "
 ui_print "****************************************"
-ui_print "  Apple Color Emoji · v5.1"
+ui_print "  Apple Color Emoji · v5.0"
 ui_print "  Unicode 16 / iOS 18.4 全量"
 ui_print "****************************************"
 ui_print " "
@@ -135,50 +135,19 @@ for f in "$MODPATH"/system/fonts/*.ttf; do
   [ -f "$f" ] && ui_print "    $(basename "$f") $(($(stat -c%s "$f") / 1024)) KB"
 done
 
-# ── 4. 处理会抢优先级的上层字体（不再无备份删除）─────────────────────────────
-# 原实现直接 `rm -f` 主题目录里的 emoji 字体、`rm -rf /data/fonts`，
-# 用户想换回自己的主题 emoji 时已经永久丢失。
-# 现在一律「先备份 → 再覆盖」，每步写进 journal，卸载时由 uninstall.sh 原样还原。
-BACKUP_ROOT=/data/adb/chiron_apple_emoji/backup
-JOURNAL=$BACKUP_ROOT/journal.txt
-BK=$BACKUP_ROOT/install-$(date +%Y%m%d-%H%M%S)
-mkdir -p "$BK" 2>/dev/null
-if [ -d "$BK" ]; then
-  ui_print "- 备份目录：$BK"
-else
-  ui_print "! 备份目录创建失败，将跳过清理步骤（不影响挂载）"
+# ── 4. 清掉会抢优先级的上层字体 ───────────────────────────────────────────────
+# 安装时先清一遍，开机后 post-fs-data / service 还会再清（GMS 可能重新下发）
+if [ -d /data/fonts ]; then
+  rm -rf /data/fonts && ui_print "- 已清除 /data/fonts（GMS 下发的字体包）"
 fi
 
-# 4.1 GMS 可更新字体：整目录挪进备份（同盘 rename，几乎不耗时），不 rm -rf
-if [ -d "$BK" ] && [ -d /data/fonts ]; then
-  if mv /data/fonts "$BK/data-fonts" 2>/dev/null; then
-    echo "dir|/data/fonts|$BK/data-fonts" >> "$JOURNAL"
-    ui_print "- /data/fonts 已移入备份（GMS 下发的字体包）"
-  else
-    ui_print "! /data/fonts 无法移走，保持原样"
-  fi
-fi
-
-# 4.2 主题字体目录：备份成功才覆盖，备份失败就一个字节都不动
-if [ -d "$BK" ] && [ -d /data/system/theme/fonts ]; then
-  _n=0
-  _skip=0
+if [ -d /data/system/theme/fonts ]; then
+  _hit=0
   for f in /data/system/theme/fonts/*[Ee]moji*.ttf; do
     [ -e "$f" ] || continue
-    _name=$(basename "$f")
-    if cp -p "$f" "$BK/theme-$_name" 2>/dev/null; then
-      if cp -f "$SRC" "$f" 2>/dev/null; then
-        chmod 0644 "$f" 2>/dev/null
-        echo "file|$f|$BK/theme-$_name" >> "$JOURNAL"
-        _n=$((_n + 1))
-      fi
-    else
-      _skip=$((_skip + 1))
-    fi
+    rm -f "$f" && _hit=$((_hit + 1))
   done
-  [ "$_n" -gt 0 ] && ui_print "- 主题字体：已备份并覆盖 $_n 个 emoji 字体"
-  [ "$_skip" -gt 0 ] && ui_print "! 主题字体：$_skip 个备份失败，已跳过（原文件未改动）"
-  [ "$_n" -eq 0 ] && [ "$_skip" -eq 0 ] && ui_print "- 主题字体目录里没有 emoji 字体"
+  [ "$_hit" -gt 0 ] && ui_print "- 已清除主题字体目录中的 $_hit 个 emoji 字体"
 fi
 
 # ── 5. 权限 ──────────────────────────────────────────────────────────────────
@@ -186,12 +155,9 @@ set_perm_recursive "$MODPATH" 0 0 0755 0644
 set_perm "$MODPATH/post-fs-data.sh" 0 0 0755
 set_perm "$MODPATH/service.sh"      0 0 0755
 set_perm "$MODPATH/action.sh"       0 0 0755
-set_perm "$MODPATH/uninstall.sh"    0 0 0755
 set_perm "$MODPATH/scripts/diag.sh" 0 0 0755
 
 ui_print " "
 ui_print "- 安装完成，重启后生效"
 ui_print "- 重启后如仍无变化，进模块详情点「执行」按钮跑一次诊断"
-ui_print "- 卸载模块会自动还原：GMS 字体服务、主题里的 emoji 字体"
-ui_print "- 字体素材版权归 Apple Inc.，仅供个人替换使用，请勿再分发"
 ui_print " "

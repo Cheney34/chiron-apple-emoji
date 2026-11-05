@@ -17,32 +17,20 @@ else
   echo "--  chcon 失败（继续尝试）"
 fi
 
-# 1. GMS 可更新字体（挪进备份，不删）
+# 1. GMS 可更新字体
 if [ -d /data/fonts ]; then
-  BK=/data/adb/chiron_apple_emoji/backup/gms-$(date +%Y%m%d-%H%M%S)
-  if mkdir -p "$BK" 2>/dev/null && mv /data/fonts "$BK/data-fonts" 2>/dev/null; then
-    echo "dir|/data/fonts|$BK/data-fonts" >> /data/adb/chiron_apple_emoji/backup/journal.txt
-    echo "OK  /data/fonts 已移入备份（GMS 字体包）: $BK"
-  else
-    echo "!!  /data/fonts 无法移走，保持原样"
-  fi
+  rm -rf /data/fonts
+  echo "OK  已删除 /data/fonts（GMS 字体包）"
 else
   echo "--  /data/fonts 不存在"
 fi
 
-# 2. 主题字体目录里的 emoji（覆盖前先备份一次，保留用户原始那份）
+# 2. 主题字体目录里的 emoji
 n=0
 if [ -d /data/system/theme/fonts ]; then
-  BKT=/data/adb/chiron_apple_emoji/backup/theme
-  mkdir -p "$BKT" 2>/dev/null
   for f in /data/system/theme/fonts/*[Ee]moji*.ttf; do
     [ -e "$f" ] || continue
     [ "$(stat -c%s "$f" 2>/dev/null)" = "$SRC_SZ" ] && continue
-    _nm=$(basename "$f")
-    if [ ! -f "$BKT/$_nm" ]; then
-      cp -p "$f" "$BKT/$_nm" 2>/dev/null || { echo "!!  备份失败，跳过 $_nm"; continue; }
-      echo "file|$f|$BKT/$_nm" >> /data/adb/chiron_apple_emoji/backup/journal.txt
-    fi
     cp -f "$SRC" "$f" 2>/dev/null && n=$((n + 1))
   done
 fi

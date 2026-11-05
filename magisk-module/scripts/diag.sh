@@ -82,24 +82,6 @@ dump /data/adb/chiron_apple_emoji/post-fs.log
 say "--- service.log"
 dump /data/adb/chiron_apple_emoji/service.log
 
-hdr "可还原性（卸载时会用到）"
-ST=/data/adb/chiron_apple_emoji
-say "状态目录: $ST"
-if [ -d "$ST/backup" ]; then
-  du -sh "$ST/backup" 2>/dev/null > /tmp/_lf
-  dump /tmp/_lf
-  ls -1 "$ST/backup" 2>/dev/null | head -10 > /tmp/_lf
-  dump /tmp/_lf
-else
-  say "  无备份目录"
-fi
-say "--- disabled.list（卸载时会 enable 回来）"
-dump "$ST/disabled.list"
-say "--- overlay 熔断标记"
-[ -f "$ST/enable_overlay" ]    && say "  enable_overlay: 已开启" || say "  enable_overlay: 未开启（默认关闭）"
-[ -f "$ST/overlay_tried" ]     && say "  overlay_tried: 存在" || say "  overlay_tried: 无"
-[ -f "$ST/overlay_confirmed" ] && say "  overlay_confirmed: 已确认" || say "  overlay_confirmed: 无"
-
 hdr "结论"
 OURS=0
 TOTAL=0

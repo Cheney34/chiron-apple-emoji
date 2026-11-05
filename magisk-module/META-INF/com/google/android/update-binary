@@ -1,47 +1,9 @@
 #!/sbin/sh
-# 只在「用 Recovery 直刷 zip」时才会走到这里。
-# KernelSU / APatch 的管理器自己解包安装，不经这个脚本。
-#
-# 原实现硬编码 `. /data/adb/magisk/util_functions.sh`：
-# 在 APatch（脚本在 /data/adb/ap/）或 KSU 环境下文件不存在，
-# source 失败后 install_module 未定义，直接 exit 0 —— 装了个寂寞，且没有任何提示。
-# 现在按路径探测，找不到就明确报错退出，让用户改用管理器安装。
-
 umask 022
 OUTFD=$2
 ZIPFILE=$3
 mount /data 2>/dev/null
 
-UF=""
-for p in \
-  /data/adb/magisk/util_functions.sh \
-  /data/adb/ksu/util_functions.sh \
-  /data/adb/ap/util_functions.sh
-do
-  if [ -f "$p" ]; then UF=$p; break; fi
-done
-
-if [ -z "$UF" ]; then
-  echo "!"
-  echo "! 找不到 Magisk / KernelSU / APatch 的安装函数："
-  echo "!   /data/adb/magisk/util_functions.sh"
-  echo "!   /data/adb/ksu/util_functions.sh"
-  echo "!   /data/adb/ap/util_functions.sh"
-  echo "! 请在本机的 Root 管理器里安装本模块（Magisk / KernelSU / APatch），"
-  echo "! 不要用第三方 Recovery 直接刷 zip。"
-  echo "!"
-  exit 1
-fi
-
-. "$UF"
-
-if ! type install_module >/dev/null 2>&1; then
-  echo "!"
-  echo "! $UF 没有提供 install_module()，本安装器无法继续。"
-  echo "! 请改用 Root 管理器的「从本地安装」功能。"
-  echo "!"
-  exit 1
-fi
-
+. /data/adb/magisk/util_functions.sh
 install_module
 exit 0

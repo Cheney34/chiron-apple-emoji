@@ -35,8 +35,13 @@ public final class EmojiService {
     private static final AtomicBoolean RUNNING = new AtomicBoolean(false);
 
     /** 黄脸 / 符号 / 旗帜 三组。 */
-    private static final Set<Integer> CORE_GROUPS =
-            new HashSet<>(Arrays.asList(3, 11, 12));
+    private static final Set<Integer> CORE_GROUPS = coreGroups();
+
+    private static Set<Integer> coreGroups() {
+        Set<Integer> set = new HashSet<>();
+        for (int id : Groups.CORE) set.add(id);
+        return set;
+    }
 
     private static final String MARK_FILE = ".ios-emoji-installed";
     private static final String STAGING_DIR = ".ios-emoji-staging";
@@ -64,7 +69,7 @@ public final class EmojiService {
                     sendStatus(context, "busy", 0, 0, "正在处理，请稍候…");
                     return;
                 }
-                startWorker(context, cmd);
+                startWorker(context, cmd, intent.getStringExtra(Protocol.EXTRA_GROUPS));
             }
         };
 
@@ -84,7 +89,8 @@ public final class EmojiService {
         sendStatus(context, "ready", 0, 0, "已连接 · " + context.getPackageName());
     }
 
-    private static void startWorker(final Context context, final String cmd) {
+    private static void startWorker(final Context context, final String cmd,
+                                    final String groupsExtra) {
         Thread thread = new Thread(new Runnable() {
             @Override
             public void run() {
@@ -93,10 +99,18 @@ public final class EmojiService {
                         restore(context);
                         sendStatus(context, "done", 1, 1, "已还原为安装前的表情包");
                     } else {
-                        boolean core = Protocol.CMD_INSTALL_CORE.equals(cmd);
-                        install(context, core);
-                        sendStatus(context, "done", 1, 1,
-                                core ? "完成 · 黄脸 / 符号 / 旗帜" : "完成 · 全部 10 组");
+                        Set<Integer> filter = null;
+                        String label = "全部 10 组";
+                        if (Protocol.CMD_INSTALL_CORE.equals(cmd)) {
+                            filter = CORE_GROUPS;
+                            label = "笑脸 / 符号 / 旗帜";
+                        } else if (Protocol.CMD_INSTALL_GROUPS.equals(cmd)) {
+                            filter = parseGroups(groupsExtra);
+                            if (filter.isEmpty()) throw new IOException("没有选中任何分组");
+                            label = describeGroups(filter);
+                        }
+                        install(context, filter);
+                        sendStatus(context, "done", 1, 1, "完成 · " + label);
                     }
                     Thread.sleep(900);
                     XposedLog.i("killing Sogou process to reload emoji");
@@ -113,9 +127,42 @@ public final class EmojiService {
         thread.start();
     }
 
+    /** "3,4,11" → {3,4,11}，非法编号与越界编号一律丢弃。 */
+    private static Set<Integer> parseGroups(String raw) {
+        Set<Integer> out = new HashSet<>();
+        if (raw == null) return out;
+        for (String part : raw.split(",")) {
+            String s = part.trim();
+            if (s.length() == 0) continue;
+            try {
+                int id = Integer.parseInt(s);
+                if (id >= Protocol.GROUP_ID_MIN && id <= Protocol.GROUP_ID_MAX) out.add(id);
+            } catch (NumberFormatException ignored) {
+            }
+        }
+        return out;
+    }
+
+    private static String describeGroups(Set<Integer> ids) {
+        List<String> labels = new ArrayList<>();
+        for (Groups.Group g : Groups.ALL) {
+            if (ids.contains(g.id)) labels.add(g.label);
+        }
+        if (labels.isEmpty()) return ids.size() + " 个分组";
+        if (labels.size() <= 2) {
+            StringBuilder sb = new StringBuilder();
+            for (String s : labels) {
+                if (sb.length() > 0) sb.append(" / ");
+                sb.append(s);
+            }
+            return sb.toString();
+        }
+        return labels.size() + " 个分组";
+    }
+
     // ── 安装 ────────────────────────────────────────────────────────────────
 
-    private static void install(Context ctx, boolean coreOnly) throws Exception {
+    private static void install(Context ctx, Set<Integer> filter) throws Exception {
         File sogouRoot = new File(ctx.getFilesDir(), "sogou");
         File packageRoot = new File(sogouRoot, "emojipackage");
         File staging = new File(sogouRoot, STAGING_DIR);
@@ -134,7 +181,7 @@ public final class EmojiService {
                 Protocol.MODULE_PKG, Context.CONTEXT_IGNORE_SECURITY);
 
         sendStatus(ctx, "extract", 0, 0, "正在解压表情包…");
-        List<String> groups = extract(ctx, module, staging, coreOnly, sogouRoot);
+        List<String> groups = extract(ctx, module, staging, filter, sogouRoot);
 
         if (groups.isEmpty()) throw new IOException("载荷为空，未找到任何分组");
         for (String name : groups) {
@@ -202,7 +249,7 @@ public final class EmojiService {
      * 把 payload.zip 里 emojipackage/ 下的分组解压到暂存目录，返回分组目录名。
      */
     private static List<String> extract(Context ctx, Context module, File staging,
-                                        boolean coreOnly, File sogouRoot) throws IOException {
+                                        Set<Integer> filter, File sogouRoot) throws IOException {
         List<String> groups = new ArrayList<>();
         Set<String> seen = new HashSet<>();
         InputStream raw = module.getAssets().open("payload.zip");
@@ -223,7 +270,7 @@ public final class EmojiService {
                 String group = rest.substring(0, slash);
                 int id = groupId(group);
                 if (id < Protocol.GROUP_ID_MIN || id > Protocol.GROUP_ID_MAX) continue;
-                if (coreOnly && !CORE_GROUPS.contains(id)) continue;
+                if (filter != null && !filter.contains(id)) continue;
 
                 String relative = rest.substring(slash + 1);
                 if (relative.length() == 0 || relative.contains("..")) continue;

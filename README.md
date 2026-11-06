@@ -10,11 +10,12 @@
 
 | 组件 | 版本 | 产物 |
 |---|---|---|
-| 项目 / Release | **6.2**（tag `v6.2`） | — |
-| MTZ 主题（免 Root） | 6.2 | `Chiron-Emoji-v6.2-MTZ.mtz` |
-| Root 模块 | 6.2（versionCode 9） | `Chiron-Emoji-v6.2-Root.zip` |
-| 搜狗 LSPosed 模块 | 1.7（versionCode 9） | `AppleEmoji_Sogou_LSPosed_v1.7.apk`（CI 构建） |
-| emoji 字体资源 | Emoji-R6-HD / Emoji-R6-Compact | 5 档真彩 / 双档真彩 |
+| 项目 / Release | **6.4**（tag `v6.4`） | — |
+| MTZ 主题（免 Root） | 6.4 | `Chiron-Merriweather_v6.4.mtz` / `Chiron-Merriweather_v6.4_AppleEmoji.mtz` |
+| 类原生 KSU 模块 | 6.4（versionCode 7） | `Chiron_KSU_Font_A17_v6.4.zip` |
+| Magisk 版模块 | 6.2（versionCode 9） | 不在 6.4 发行内，源码仍在 [`magisk-module/`](magisk-module/) |
+| 搜狗 LSPosed 模块 | 1.8（versionCode 10） | `AppleEmoji_Sogou_LSPosed_v1.8.apk`（CI 构建） |
+| emoji 字体资源 | Emoji-R6-HD / Emoji-R6-Compact | 128 ppem 高位图 / 32·45·60 三档真彩 |
 
 改动记录见 [CHANGELOG.md](CHANGELOG.md)。版本号规则：项目、Root、MTZ 共用同一个语义化版本；字体资源单独编号，因为同一个版本号下两条通道的位图档数不同。
 

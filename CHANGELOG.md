@@ -4,6 +4,40 @@
 
 ---
 
+## 6.4 — 2026-11-06 — 私用区 U+F8FF 换成苹果 logo
+
+只动一个字形，其余与 6.3_refix 逐像素一致。
+
+U+F8FF 是苹果系统里唯一的私用区码位（`U+E000–U+F8FF` 里苹果只用了这一个），
+iOS / macOS 上打出来是苹果标志。Chiron GoRound TC 原字体在这个码位放的是一颗带字母 N
+的五角星，于是换上这套字体后，从备忘录、Pages、Keynote 复制过来的标志会变成星号。
+
+### 改了什么
+
+- **`chiron-font/patch_apple_logo.py`（新增）**：从 `PingFangSC-Regular.ttf` 取 U+F8FF 的轮廓，
+  写进 Chiron VF 的同名字形 `uniF8FF`。两者 upem 都是 1000，不用缩放；字宽 658 → 1000
+  （苹果原版是占满全角的图标位），`gvar` 里该字形本来就没有 delta，删掉后全档同一形状。
+- **三份产物同步换字体**：`Chiron-Merriweather_v6.4.mtz`、`..._AppleEmoji.mtz`、
+  `Chiron_KSU_Font_A17_v6.4.zip` 内的 `Roboto-Regular.ttf` 是同一个文件
+  （69,340,020 B，sha256 `dcc31ca9…`）。6.3 三个渠道各有各的构建，这次统一。
+- **KSU 模块 `versionCode` 6 → 7**，`module.prop` / `README.md` 版本与改动说明同步。
+- **`docs/release-notes.md` 换成 6.4 版**。这个文件是 CI 的 `body_path`：打 tag 时
+  `softprops/action-gh-release` 会拿它覆盖 Release 正文。它停在 6.2 是 6.3_refix 那次
+  「Release 正文写着 v6.2 附件表」的原因，现在补上。
+
+### 验证
+
+- cmap 46,046 码位 / 50,551 字形 / hhea 1078 -348 / typo 976 -246 200 / `wght` 150–700 全部未变；
+- 28 / 44 / 76 px × 150 / 330 / 500 / 700 四档字重渲染中英混排样本，与 6.3 差异像素数 0；
+- 三个 zip 均 `testzip()` 通过，KSU 包保留 `update-binary` / `customize.sh` / `post-fs-data.sh` /
+  `uninstall.sh` 的可执行位。
+
+### 保持
+
+6.3_refix 的星号重画（388×366、中心 531、adv 452）、`@` 上移、行高 1.280 em 全部沿用。
+
+---
+
 ## 6.2 — 2026-10-31 — 首个正式版
 
 项目第一次对外发布：MTZ 主题首次带上 Apple Color Emoji，Root 模块脚本重写，搜狗 LSPosed 模块一并出 1.7。这一版的重点是把规格问题挡在构建入口 —— 256 色单档、advance 2550 的旧字体从此打不进 MTZ。

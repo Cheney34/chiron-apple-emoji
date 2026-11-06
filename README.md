@@ -7,7 +7,7 @@
 > **📦 LSPosed 模块已拆分为独立仓库：[Cheney34/apple-input-for-sogou](https://github.com/Cheney34/apple-input-for-sogou)（Apple Input for Sogou）**
 >
 > 搜狗输入法的 Xposed 模块不再在本仓库内演进。新仓库按版本提供选择：
-> [v2.0.0-alpha4](https://github.com/Cheney34/apple-input-for-sogou/releases/tag/v2.0.0-alpha4)（推荐：改搜狗默认皮肤做 Apple 外观）、
+> [v2.0.0-alpha5](https://github.com/Cheney34/apple-input-for-sogou/releases/tag/v2.0.0-alpha5)（推荐：改搜狗默认皮肤 + 键帽按 iOS 重绘）、
 > [v1.8](https://github.com/Cheney34/apple-input-for-sogou/releases/tag/v1.8) / [v1.7](https://github.com/Cheney34/apple-input-for-sogou/releases/tag/v1.7)（旧版表情模块存档）。
 > 本仓库 `lsposed-sogou/` 目录保留原样，作为 v1.x 的历史来源，不再更新。
 

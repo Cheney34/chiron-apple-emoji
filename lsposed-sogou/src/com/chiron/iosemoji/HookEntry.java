@@ -45,6 +45,14 @@ public class HookEntry implements IXposedHookLoadPackage {
             XposedBridge.log(t);
         }
 
+        // 输入「苹果」/「pg」上屏成 U+F8FF。不依赖搜狗任何私有类，
+        // 挂的是 framework 的 InputMethodService，越早越好。
+        try {
+            LogoHook.install();
+        } catch (Throwable t) {
+            XposedBridge.log(t);
+        }
+
         try {
             XposedHelpers.findAndHookMethod(
                     Application.class,
@@ -65,6 +73,11 @@ public class HookEntry implements IXposedHookLoadPackage {
                                     XposedBridge.log(t);
                                 }
                                 scheduleGroupFilter(ctx);
+                                try {
+                                    LogoHook.install();
+                                } catch (Throwable t) {
+                                    XposedBridge.log(t);
+                                }
                                 EmojiService.register(ctx);
                             } catch (Throwable t) {
                                 XposedBridge.log(t);

@@ -34,6 +34,7 @@ src/com/chiron/iosemoji/
     EmojiService.java    进程内写文件、备份、还原
     GestureHook.java     放开面板左右滑动
     GroupFilterHook.java 摘掉搜狗内置的「组合」「拼装」分组
+    LogoHook.java        输入「苹果」/「pg」上屏成苹果标志 U+F8FF
     MainActivity.java    三个按钮 + 连接检查
     Protocol.java        常量
 manifests/               10 个分组的 info.xml（纯文本清单）
@@ -69,7 +70,7 @@ python3 tools/make_payload.py --src /path/to/img-apple-160 --out assets/payload.
 验证：`adb shell ls /data/data/com.sohu.inputmethod.sogou/files/sogou/emojipackage/`
 应该能看到 `3_9000000010000` 这样的目录，且第一个是笑脸。
 
-## 三个 hook 分别在解决什么
+## 四个 hook 分别在解决什么
 
 ### 1. 写文件（EmojiService）
 
@@ -103,6 +104,43 @@ hook `setScrollable()` 强制 `slide=true`，并跳过那段动画。
   `w1()` 会误判成「本地缺失」而重新解压，这里对这两个分组直接返回 `true`，不写盘。
 
 两个 hook 都不删任何文件，在 LSPosed 里取消勾选就完全恢复原样。
+
+### 4. 输入「苹果」/「pg」出苹果标志（LogoHook）
+
+`U+F8FF` 是苹果系统里**唯一**的私用区码位，iOS / macOS 上打出来就是苹果标志。
+Chiron 6.4 起这个码位已经换成苹果 logo（此前是 Chiron 原厂带 N 的五角星）。
+
+触发词**全等匹配**，命中后在上屏前把整串换掉：
+
+```
+commitText("苹果", 1)   →   commitText("\uF8FF", 1)
+commitText("pg",   1)   →   commitText("\uF8FF", 1)
+```
+
+挂载点是 `InputMethodService.getCurrentInputConnection()`，拿到 IME 侧的
+`InputConnection` 之后，对它**实际实现的类**做 `hookAllMethods("commitText")`。
+不包装成 `InputConnectionWrapper` 子类，是因为 API 33 起多了
+`commitText(CharSequence, int, TextAttribute)` 这个重载，包装类只会转发到 target
+的三参方法、绕过两参重写；直接 hook 实现类能把所有重载一次盖住，签名里也不用
+引用 API 33 才有的 `TextAttribute`（否则 minSdk 26 的机器上类校验可能出问题）。
+
+**为什么不往候选条里插一条**：搜狗的候选是 native 引擎算出来的
+（`libSogouIME` 一类），Java 侧只负责把算好的字符串塞进候选 View。想凭空加一条，
+得复刻它的候选对象（文本 + 类型 + 编码 + 点击后回传的 id），这套结构每个版本都在变，
+对不上就崩输入法。上屏这一层只改一个字符串参数，不碰搜狗任何私有类。
+
+**想要「候选条里直接出现 logo」**：用搜狗自带的「设置 → 高级 → 自定义短语」，
+编码填 `pg`，短语内容填一个 `U+F8FF` 字符（从装了 Chiron 6.4 的手机上复制）。
+候选条和上屏都用系统字体渲染，所以会直接显示成苹果标志，不用本模块参与。
+这条路的编码位只认字母数字，中文触发词（「苹果」）走不了。
+
+限制：
+
+- 只有当前字体带这个字形时才显示 logo，即 **Chiron 6.4 及以上**；换回系统字体就是豆腐块；
+- 一旦 `TRIGGERS` 里留着 `"苹果"`，你就再也打不出「苹果」这两个字了。
+  还要正常输入这个词的话，把它删掉，只留 `"苹果logo"`、`"pgl"` 这类显式写法；
+- 少数 App 自带字体（不是系统字体），私用区会显示成方块；
+- 侧滑输入、语音输入一般也走 `commitText`，同样会被替换。
 
 ## 分组顺序
 

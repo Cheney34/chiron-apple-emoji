@@ -12,7 +12,7 @@ import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
 
 /**
- * 输入「苹果」或「pg」，上屏后变成苹果私用区字形 U+F8FF（苹果标志）。
+ * 输入显式触发词（默认「苹果logo」「pgl」等），上屏后变成苹果私用区字形 U+F8FF。
  *
  * 为什么不去改候选条
  * ─────────────────
@@ -50,13 +50,16 @@ final class LogoHook {
     /**
      * 触发词，全等匹配（不做包含匹配，避免「苹果手机」被误替换）。
      *
-     * ⚠ 一旦保留 "苹果"，你就再也打不出「苹果」这两个字了。
-     *   如果还要正常输入这个词，把它删掉，只留 "苹果logo" / "pgl" 这类显式写法。
+     * ⚠ 默认只放「显式写法」。像 "苹果" 这种常用词不要放进来：
+     *   一旦放进来，你就再也打不出「苹果」这两个字；而且如果同时还给搜狗加了
+     *   「自定义短语」（编码 pg / pingguo → 🍎 / ），用户点选「苹果」后会被这里
+     *   再换成 U+F8FF，两条链路打架。
+     *
+     * 想要「打中文直接替换成 logo」，把它加到数组里即可，比如 {"苹果", "pgl"}。
      */
     private static final String[] TRIGGERS = {
-            "苹果", "苹果logo",
-            "pg", "PG", "Pg", "pG",
-            "pgl", "PGL", "PGlogo", "pglogo",
+            "苹果logo", "苹果标志",
+            "pgl", "PGL", "pglogo", "PGlogo",
     };
 
     /** 边打字边替换：开着更接近「弹出」，但会让搜狗的内部缓冲区与编辑器不一致，退格会怪。 */

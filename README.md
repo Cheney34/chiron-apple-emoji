@@ -4,11 +4,11 @@
 
 本仓库只包含**源码、构建脚本和文档**。字体成品（`.ttf`）、MTZ 主题包、APK 均在本地由脚本生成，不随仓库分发 —— 原因见 [THIRD-PARTY.md](THIRD-PARTY.md)。
 
-> **📦 LSPosed 模块已拆分为独立仓库：[Cheney34/chiron-ios-input](https://github.com/Cheney34/chiron-ios-input)**
+> **📦 LSPosed 模块已拆分为独立仓库：[Cheney34/apple-input-for-sogou](https://github.com/Cheney34/apple-input-for-sogou)（Apple Input for Sogou）**
 >
 > 搜狗输入法的 Xposed 模块不再在本仓库内演进。新仓库按版本提供选择：
-> [v2.0.0-alpha1](https://github.com/Cheney34/chiron-ios-input/releases/tag/v2.0.0-alpha1)（iOS 风格键盘显示层替换 · alpha）、
-> [v1.8](https://github.com/Cheney34/chiron-ios-input/releases/tag/v1.8) / [v1.7](https://github.com/Cheney34/chiron-ios-input/releases/tag/v1.7)（旧版表情模块存档）。
+> [v2.0.0-alpha2](https://github.com/Cheney34/apple-input-for-sogou/releases/tag/v2.0.0-alpha2)（Apple 风格键盘显示层替换 · alpha）、
+> [v1.8](https://github.com/Cheney34/apple-input-for-sogou/releases/tag/v1.8) / [v1.7](https://github.com/Cheney34/apple-input-for-sogou/releases/tag/v1.7)（旧版表情模块存档）。
 > 本仓库 `lsposed-sogou/` 目录保留原样，作为 v1.x 的历史来源，不再更新。
 
 ---

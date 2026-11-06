@@ -4,7 +4,7 @@
 
 本仓库只包含**源码、构建脚本和文档**。字体成品（`.ttf`）、MTZ 主题包、APK 均在本地由脚本生成，不随仓库分发 —— 原因见 [THIRD-PARTY.md](THIRD-PARTY.md)。
 
-> **📦 LSPosed 模块已拆分为独立仓库：[Cheney34/apple-input-for-sogou](https://github.com/Cheney34/apple-input-for-sogou)（Apple Input for Sogou）**
+> 新版模块（独立仓库）：https://github.com/Cheney34/apple-input-for-sogou — 最新 **v2.0.2-beta1**（支持 OPPO 定制版 + 小米定制版），存档 v2.0.1-beta4 / v1.8 / v1.7。
 >
 > 搜狗输入法的 Xposed 模块不再在本仓库内演进。新仓库按版本提供选择：
 > [v2.0.0-alpha10](https://github.com/Cheney34/apple-input-for-sogou/releases/tag/v2.0.0-alpha10)（推荐：四套皮肤 iOS / 微信 / Google / 莫奈取色）、

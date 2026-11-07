@@ -155,4 +155,7 @@ jobs:
           # 用仓库里的正文，而不是 GitHub 自动生成的那段英文列表
           name: ${{ github.ref_name }}
           body_path: docs/release-notes.md
+          # 注意：这里挂的是 lsposed-sogou/ 里冻结的 1.x 模块，它的 manifests 停在 Emoji 16.0。
+          # 表情面板的新版在 apple-input-for-sogou，所以字体发版（6.5 起）会在发布后手动
+          # 删掉这个 APK，避免「字体说 17.0、面板还是 16.0」的错配。
           files: dist/*.apk

@@ -30,6 +30,10 @@ Unicode 17.0 于 2025-09 定稿，苹果在 iOS 26.4 测试版里把这批图画
 
 两个 MTZ 只能装一个。装 KSU 模块之前先卸载或禁用其它字体模块，两个模块抢同一批文件必炸。
 
+> 本页只发字体成品。搜狗表情面板的模块已迁到 [apple-input-for-sogou](https://github.com/Cheney34/apple-input-for-sogou)
+> （最新 **v2.1.1**，同样升到 Emoji 17.0）；本仓库的 `lsposed-sogou/` 是冻结的 1.x 历史版本，
+> 清单仍停在 16.0，不再随字体版本发 APK。
+
 HyperOS / MIUI 建议直接用 MTZ：KSU 模块是照类原生 AOSP 的 `font_fallback.xml` 结构写的，HyperOS 上不一定插得进去。
 
 ## 6.5 改了什么

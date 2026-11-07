@@ -55,6 +55,14 @@ hdr "模块字体"
 say "emoji: $EMOJI_SRC"
 say "       字节数 $EMOJI_SZ"
 say "       指纹   $(sha256sum "$EMOJI_SRC" 2>/dev/null | cut -c1-16)"
+# 6.3–6.5.2 只做了 3 档（38/53/70 px），大字号请求 96/150 px 时找不到 strike，
+# Minikin 会判定字体不可用并回退到系统的 AOSP 字形。5 档约 190 MB，3 档约 57 MB。
+if [ "${EMOJI_SZ:-0}" -ge 130000000 ]; then
+    say "       档位   5 档（38/53/70/96/150 px）—— 正常"
+else
+    say "       档位   !! 只有 3 档（38/53/70 px），大字号会掉回 Android 字形"
+    say "       建议   换 6.6 的包（emoji 恢复到 5 档）"
+fi
 if [ -n "$BODY_SRC" ]; then
     say "正文 : $(basename "$BODY_SRC")  $(stat -c%s "$BODY_SRC" 2>/dev/null) 字节"
     say "       指纹 $(sha256sum "$BODY_SRC" 2>/dev/null | cut -c1-16)"
@@ -139,7 +147,7 @@ for f in /system/fonts/*[Ee]moji*.ttf; do
     [ "$(stat -c%s "$f" 2>/dev/null)" = "$EMOJI_SZ" ] && OURS=$((OURS + 1))
 done
 if [ -e "$MODDIR/disable" ]; then
-    say "  模块被禁用（disable 标记）。到模块列表打开它，或重装 6.5.2+（安装时会自动清掉）。"
+    say "  模块被禁用（disable 标记）。到模块列表打开它，或重装 6.6+（安装时会自动清掉）。"
 elif [ "$TOTAL" -eq 0 ]; then
     say "  系统里找不到任何 emoji 字体文件，ROM 结构异常。"
 elif [ "$OURS" -eq "$TOTAL" ]; then

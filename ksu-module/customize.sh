@@ -41,10 +41,25 @@ SRC_EMOJI="$MODPATH/system/fonts/NotoColorEmoji.ttf"
 
 ui_print " "
 ui_print "****************************************"
-ui_print "  Chiron × Apple Emoji · 6.5.2"
+ui_print "  Chiron × Apple Emoji · 6.6"
 ui_print "  正文 + Emoji 17.0（iOS 26 字形）"
 ui_print "****************************************"
 ui_print " "
+
+# ---------- 字体自检：档位数量必须 ≥ 5 ----------
+# 这是 6.3–6.5.2 一直「装了还是安卓风格」的真凶。CBDT 是定点位图字体，
+# 系统按实际像素大小挑 strike；只剩 38/53/70px 三档时，大字号请求 96/150px
+# 找不到档位，FreeType 报 size 不匹配，Minikin 判定该字体不可用，直接回退到
+# 系统自带的 NotoColorEmoji（AOSP 字形）。表现就是小字号像 iOS、一放大变安卓。
+EMOJI_SZ=$(stat -c%s "$SRC_EMOJI" 2>/dev/null)
+ui_print "- emoji 字体 $((${EMOJI_SZ:-0} / 1048576)) MB"
+if [ "${EMOJI_SZ:-0}" -lt 130000000 ]; then
+    ui_print "! 警告：字体只有 ${EMOJI_SZ:-0} 字节，远小于 5 档位应有的 ~190 MB"
+    ui_print "! 这个包大概是 6.3–6.5.2 的旧版（32/45/60 三档），大字号会掉回安卓字形"
+    ui_print "! 请换 6.6 的包重装"
+else
+    ui_print "- 档位自检通过（5 档：38/53/70/96/150 px）"
+fi
 
 # ---------- 0. 冲突检测 ----------
 # 同一路径只能有一个来源：KSU / Magisk 按 /data/adb/modules 的目录名顺序挂载，

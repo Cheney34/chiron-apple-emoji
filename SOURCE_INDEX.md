@@ -1,6 +1,6 @@
 # Chiron 项目源码索引（2026-11-05）
 
-本包内是当前最新的全部源码，对应出货版本 **v6.5.2**。
+本包内是当前最新的全部源码，对应出货版本 **v6.6**。
 
 ## 版本对照
 
@@ -8,7 +8,7 @@
 |---|---|---|
 | `lsposed-sogou/` | `Chiron_Emoji_Sogou_LSPosed_v1.8.apk` | v1.8 |
 | `chiron-font/` | `Chiron-Merriweather_v6.5.mtz`<br>`Chiron-Merriweather_v6.5_AppleEmoji.mtz` | v6.5 |
-| `ksu-module/` | `Chiron_KSU_Font_A17_v6.5.2.zip` | v6.5.2 |
+| `ksu-module/` | `Chiron_KSU_Font_A17_v6.6.zip` | v6.6 |
 | `emoji-font/` | 上两个 mtz 与 KSU 包内的 `NotoColorEmoji.ttf` | Emoji 17.0 / iOS 26 |
 | `magisk-module/` | 未出货（Magisk 版，审计未过） | — |
 

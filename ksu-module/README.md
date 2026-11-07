@@ -6,11 +6,25 @@
 |---|---|
 | 中文字体 | Chiron GoRound TC |
 | 西文与数字 | Merriweather（合并进同一个字体文件） |
-| Emoji | Apple 彩色 emoji（Emoji 17.0 / iOS 26 字形，RGBA 真彩 32/45/60 三档位图） |
+| Emoji | Apple 彩色 emoji（Emoji 17.0 / iOS 26 字形，RGBA 真彩 32/45/60/82/128 五档位图） |
 
 - 模块 id：`chiron_apple_emoji`（沿用 5.0 / 6.2 这条线，KSU 里是**升级**，不会多出一条）
-- 版本：`v6.5.2`（versionCode 11）
+- 版本：`v6.6`（versionCode 12）
 - 适用：KernelSU / Magisk / APatch，Android 14+
+
+## 6.6：找到「还是安卓风格」的真凶
+
+6.3 起为了压体积，emoji 字体只做了 **32/45/60 三个档位**（38/53/70 px）。
+CBDT/CBLC 是**定点位图**字体 —— 系统按实际渲染像素挑 strike。
+
+大字号时（emoji 键盘预览、表情详情、通知、微信大表情）系统请求 96 px / 150 px，
+字体里没有对应档位，FreeType 返回 size 不匹配，Minikin 判定「这个字体画不出来」，
+于是**整段回退到系统自带的 NotoColorEmoji**——也就是安卓那张扁平脸。
+
+所以症状很迷惑：小字号看着像 iOS，一放大就变安卓；有的 App 对有的 App 不对。
+
+5.0 那版用的是 **32/45/60/82/128 五档**（38/53/70/96/150 px），从不缺档。
+6.6 恢复五档，字体体积回到 ~190 MB，这是正常的。
 
 ## 为什么 6.5.2 要重做挂载
 
@@ -29,7 +43,7 @@
 
 ## 安装
 
-KSU Manager → 模块 → 从本地安装 → 选 `Chiron_KSU_Font_A17_v6.5.2.zip` → 重启。
+KSU Manager → 模块 → 从本地安装 → 选 `Chiron_KSU_Font_A17_v6.6.zip` → 重启。
 
 安装时会：
 
@@ -90,6 +104,7 @@ uninstall.sh                             清理状态目录
 
 ## 更新日志
 
+- **v6.6** emoji 位图从 3 档恢复到 5 档（38/53/70/96/150 px），修掉「大字号掉回安卓字形」；
 - **v6.5.2** 恢复 5.0 的四道保险（bind mount / 铺满文件名 / 禁 GMS 下发 / 清缓存），修掉「emoji 变回安卓风格」；
   安装时自动清掉自身的 `disable` 标记；正文字体与 `font_fallback.xml` 在 overlay 没盖住时也一并 bind。
   字体内容与 6.5 / 6.5.1 完全一致。

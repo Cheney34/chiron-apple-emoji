@@ -1,6 +1,6 @@
 id=chiron_apple_emoji
 name=Apple Color Emoji (Chiron 配套)
-version=v6.5.2
-versionCode=11
+version=v6.6
+versionCode=12
 author=Cheney34
-description=Chiron GoRound TC + Merriweather 正文，配 Apple 彩色 emoji（Emoji 17.0 / iOS 26 字形）。6.5.2 恢复了 5.0 那版的四道保险：安装期按 fonts.xml 铺满系统真正引用的 emoji 文件名、system.prop 禁用 GMS 字体下发、post-fs-data 用 bind mount 顶掉每个 emoji 位点并修正 SELinux 上下文、service.sh 开机后清字形缓存。6.3–6.5 只靠 overlay，本机会出现「装了跟没装一样、emoji 仍是安卓风格」。模块 id 沿用 5.x / 6.2 的 chiron_apple_emoji；6.3–6.5 临时用的 chiron_ksu_font 请卸载。
+description=Chiron GoRound TC + Merriweather 正文，配 Apple 彩色 emoji（Emoji 17.0 / iOS 26 字形）。6.6 修「装了还是安卓风格」的真凶：6.3–6.5.2 的 emoji 字体只做了 32/45/60 三个档位（38/53/70px），大字号时系统请求 96px / 150px 位图找不到对应 strike，判定该字体不可用，直接回退到系统自带的 AOSP 字形 —— 所以小字号像 iOS、一放大就变安卓。6.6 恢复到 5.0 那版的 32/45/60/82/128 五档（38/53/70/96/150px）。模块 id 沿用 5.x / 6.2 的 chiron_apple_emoji；6.3–6.5 临时用的 chiron_ksu_font 请卸载。

@@ -57,11 +57,28 @@ HyperOS / MIUI 建议直接用 MTZ：KSU 模块是照类原生 AOSP 的 `font_fa
 - **U+F8FF 苹果 logo** 沿用 6.4 的字形，没回退。
 - 顺手修了 `emoji-font/build17.py` 里硬编码 `/root/work/` 的中间文件路径（换机器就崩）。
 
-## 搜狗输入法面板
+## 字体只管显示，输入是另一条链路
 
-系统字体换了，搜狗表情面板里仍是它自己的包。要让面板也是这套 17.0 的图，用独立仓库的模块：
-[apple-input-for-sogou v2.1.1](https://github.com/Cheney34/apple-input-for-sogou/releases/tag/v2.1.1)
-—— `info.xml` 补了 8 条新条目、给 6 个老表情打开肤色，payload 从 3868 → 3911 条目。
+换了字体之后能看见别人发来的 🫪，不代表自己能打出来。**面板里有没有这个键，由输入法自己的
+表情清单决定**，字体管不到：
+
+| 键盘 | 面板清单在哪 | 换字体能不能多出 17.0 |
+|---|---|---|
+| Gboard / 小米键盘 / 系统键盘 | 各自 APK 里编好的数据（`EmojiCompat` 元数据） | ❌ 只能等 App 更新 |
+| 搜狗输入法 | `files/sogou/emojipackage/<分组>/info.xml` | ✅ 模块可替换 |
+
+所以「复制粘贴能显示」是字体在起作用，「自己打不出来」是键盘里没这条路，两件事。
+想自己打出来，走独立仓库的模块：
+
+- [apple-input-for-sogou **v2.1.2**](https://github.com/Cheney34/apple-input-for-sogou/releases/tag/v2.1.2)
+  —— 新增快捷码，打 `pg1`–`pg8` 上屏就是这 8 个新表情（默认开，不依赖面板装没装）。
+- [v2.1.1](https://github.com/Cheney34/apple-input-for-sogou/releases/tag/v2.1.1)
+  —— 搜狗表情面板的清单：`info.xml` 补 8 条新条目、给 6 个老表情打开肤色，
+  payload 3868 → 3911 条目。新条目在各自分组**最末尾**。
+
+也可以完全不装模块，用搜狗自带的「自定义短语」（设置 → 输入设置 → 自定义短语），
+缩写写 `pg1`、短语写 🫪，加 8 条。三条路的细节见
+[怎么打出新表情](https://github.com/Cheney34/apple-input-for-sogou/blob/main/docs/怎么打出新表情.md)。
 
 ## 校验值
 
@@ -75,7 +92,7 @@ HyperOS / MIUI 建议直接用 MTZ：KSU 模块是照类原生 AOSP 的 `font_fa
 
 | 限制 | 说明 |
 |---|---|
-| 新表情能不能打出来看输入法 | 字体里已经有 17.0 的码位，但输入法的候选/面板是否收录由 App 决定。系统层（微信、短信、备忘录）复制粘贴即可显示 |
+| 字体不管输入 | 字体里已经有 17.0 的码位，所以**能显示**；但键盘面板里有没有这个键由输入法决定，**要能打必须另装模块或用自定义短语**，见上面那节 |
 | 酷安 / 微博仍是自带字体 | 这类 App 内置 emoji2-bundled 渲染器，任何系统级替换都不生效 |
 | Apple 美术资源不再分发 | 仓库只放脚本，位图由 `emoji-font/fetch17.py` 在你本机抓取 |
 | 苹果 logo 是商标 | 只做字形替换，未获再分发授权，仅供个人本机使用 |

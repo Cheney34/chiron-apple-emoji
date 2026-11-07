@@ -1,8 +1,8 @@
 # 自动构建 LSPosed 模块（搜狗表情面板替换）
 #
 # 设计要点：
-#   1. 素材不进仓库。Apple emoji 位图由 CI 现场从 npm 拉 emoji-datasource-apple，
-#      仓库只保存 10 份 info.xml 清单（纯文本）。
+#   1. 素材不进仓库。Apple emoji 位图由 CI 现场跑 emoji-font/fetch17.py 拉
+#      （Emoji 17.0 / iOS 26，上游 commit 写死在脚本里），仓库只保存 10 份 info.xml 清单。
 #   2. XposedBridgeAPI 从 Maven Central 取，不占仓库体积。
 #   3. 签名密钥走 Secret。社区已分发的版本用的是固定 debug 签名，
 #      换签名会导致覆盖安装失败，所以要把同一份 keystore 存成 SIGNING_KEY_B64。
@@ -18,9 +18,9 @@ on:
   workflow_dispatch:
     inputs:
       emoji_version:
-        description: 'emoji-datasource-apple 版本'
+        description: '仅记录用：实际素材版本由 emoji-font/fetch17.py 的 REV 决定'
         required: false
-        default: '16.0.0'
+        default: '17.0'
         type: string
       release:
         description: '构建完是否发 Release（需先在仓库里打 tag）'
@@ -58,19 +58,15 @@ jobs:
           python3 -m pip install --quiet --upgrade pip
           python3 -m pip install --quiet pillow
 
-      - name: 拉取 Apple emoji 素材
-        env:
-          VER: ${{ inputs.emoji_version || '16.0.0' }}
+      - name: 拉取 Apple emoji 素材（Emoji 17.0 / iOS 26）
         run: |
           set -euo pipefail
-          URL="https://registry.npmjs.org/${EMOJI_PKG}/-/${EMOJI_PKG}-${VER}.tgz"
-          echo "下载 $URL"
-          curl -fsSL --retry 3 --retry-delay 2 -o /tmp/emoji.tgz "$URL"
-          mkdir -p /tmp/emoji
-          tar xzf /tmp/emoji.tgz -C /tmp/emoji --strip-components=1
-          N=$(ls /tmp/emoji/img/apple/64/*.png | wc -l)
-          echo "素材 $N 张（64×64）"
-          [ "$N" -gt 3000 ] || { echo "素材数量异常，检查包结构"; exit 1; }
+          # npm 上的 emoji-datasource-apple 停在 16.0.0，没有 17.0 的图；
+          # 改用 emoji-font/fetch17.py（流式解 iamcal/emoji-data 的 tarball，commit 写死）。
+          python3 emoji-font/fetch17.py --out /tmp/emoji17
+          N=$(ls /tmp/emoji17/img/*.png | wc -l)
+          echo "素材 $N 张（160×160）"
+          [ "$N" -gt 3900 ] || { echo "素材数量异常，检查上游结构是否变了"; exit 1; }
 
       - name: 拉取 XposedBridgeAPI-82
         run: |
@@ -106,9 +102,9 @@ jobs:
         run: |
           set -euo pipefail
           python3 lsposed-sogou/tools/make_payload.py \
-            --src /tmp/emoji/img/apple/64 \
+            --src /tmp/emoji17/img \
             --out lsposed-sogou/assets/payload.zip \
-            --version 16.0
+            --version 17.0
 
       - name: 选择签名
         env:

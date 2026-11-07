@@ -94,11 +94,21 @@ else
     ui_print "- 没有其它模块抢同一批字体"
 fi
 
-# 6.3–6.5 临时用过 chiron_ksu_font，本版回到 chiron_apple_emoji
-if [ -d /data/adb/modules/chiron_ksu_font ]; then
-    ui_print "- 检测到 6.3–6.5 的临时模块 chiron_ksu_font"
-    ui_print "  本版已回到 chiron_apple_emoji 这条线，装完请把它卸载"
-fi
+# 6.3–6.5 临时用过 chiron_ksu_font。它和本模块 **id 不同**，KSU 会当成两个独立模块并列，
+# 而且 "chiron_ksu_font" 按字母序排在 "chiron_apple_emoji" 后面 —— 模块是按目录名顺序
+# 依次挂载、后挂覆盖先挂，于是那个旧模块的字体把本模块顶掉。
+# 这正好能解释「装了 6.5.2 还是安卓风格、mount 里看着全挂上了」。
+# 它是同项目的临时 id，直接清掉是安全的；清不掉就明确让用户手动卸载。
+for OLD in /data/adb/modules/chiron_ksu_font /data/adb/modules_update/chiron_ksu_font; do
+    [ -d "$OLD" ] || continue
+    ui_print "! 发现 6.3–6.5 的旧模块：$OLD"
+    ui_print "  它按字母序排在本模块之后，挂载时会覆盖本模块的字体"
+    if rm -rf "$OLD" 2>/dev/null && [ ! -d "$OLD" ]; then
+        ui_print "- 已移除（同项目的临时 id，删掉不会丢东西）"
+    else
+        ui_print "! 自动移除失败，请到模块列表把「Chiron × Apple Emoji（类原生）」卸载后重启"
+    fi
+done
 
 # ---------- 0.5 自身启用状态 ----------
 # KSU / Magisk 里「关闭」模块 = 在模块目录下建 disable 文件，被禁用的模块不挂载。

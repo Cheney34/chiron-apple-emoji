@@ -31,6 +31,9 @@ CBDT/CBLC 是**定点位图**字体。系统按实际渲染的像素大小去挑
 - **`customize.sh` 加档位自检**：安装时若字体小于 130 MB，直接警告「这是 6.3–6.5.2 的
   三档包，大字号会掉回安卓字形」。
 - **`scripts/diag.sh` 加档位判定**：「执行」按钮输出的诊断里会写明当前是 5 档还是 3 档。
+- **`customize.sh` 自动清掉 `chiron_ksu_font`**：6.3–6.5 用的临时 id 和 `chiron_apple_emoji`
+  id 不同，KSU 当两个独立模块并存；挂载按目录名字母序、后挂覆盖先挂，`chiron_ksu_font`
+  排在后面，会把本模块的字体顶掉。同项目的临时 id，安装时直接删。
 - 挂载链路（`post-fs-data.sh` / `service.sh` / `system.prop` / `action.sh`）与 6.5.2 相同，
   没有改动 —— 那部分是对的。
 - 正文字体没动：`Roboto-Regular.ttf` `dcc31ca9…`（69,340,020 B）。

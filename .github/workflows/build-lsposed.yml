@@ -148,14 +148,11 @@ jobs:
           path: dist/*.apk
           retention-days: 30
 
-      - name: 发布 Release
-        if: startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@v2
-        with:
-          # 用仓库里的正文，而不是 GitHub 自动生成的那段英文列表
-          name: ${{ github.ref_name }}
-          body_path: docs/release-notes.md
-          # 注意：这里挂的是 lsposed-sogou/ 里冻结的 1.x 模块，它的 manifests 停在 Emoji 16.0。
-          # 表情面板的新版在 apple-input-for-sogou，所以字体发版（6.5 起）会在发布后手动
-          # 删掉这个 APK，避免「字体说 17.0、面板还是 16.0」的错配。
-          files: dist/*.apk
+      # 打 tag 时只留 artifact，不再自动建 Release。
+      #
+      # 原因：这里构建的是 lsposed-sogou/ 里冻结的 1.x 面板，它的 manifests 停在 Emoji 16.0；
+      # 新版面板已经搬到 apple-input-for-sogou 单独发。以前 tag 触发会顺手建一个 Release
+      # 并挂上这个旧 APK，结果「字体说 17.0、面板还是 16.0」，每次发版都要手动删。
+      #
+      # 字体模块包（~226 MiB）本来就得手动传，Release 一并手动建，避免出现半成品页面：
+      #   python ghrel.py create Cheney34/chiron-apple-emoji vX.Y docs/release-notes.md

@@ -4,6 +4,39 @@
 
 ---
 
+## 6.5.2 — 2026-11-07 — 恢复 bind mount，修「emoji 变回安卓风格」
+
+6.5 / 6.5.1 只靠模块自带的 `system/fonts/` 目录（overlay）。本机 Android 17 实测 overlay
+不保证生效：`/system/fonts/NotoColorEmoji.ttf` 仍是系统原版。于是 emoji 能显示（系统自带
+Noto 也有 17.0 的码位），但画出来是安卓风格。回退点是 6.3 —— 重写模块时把 5.0 的四道保险删了。
+
+### 改了什么
+
+- **`post-fs-data.sh` 重写**：`mount --bind` 到 `/system/fonts`、`/product/fonts`、
+  `/system_ext/fonts` 下每一个 `*Emoji*.ttf`，并 `chcon u:object_r:system_file:s0`；
+  全部失败时退化到 overlayfs（挂完立刻验证基础字体可读，读不到就回滚）。
+  正文字体与 `font_fallback.xml` 在「实际字节数与模块内不一致」时也一并 bind。
+- **`customize.sh` 增加文件名解析**：从 `fonts.xml` / `font_fallback.xml` 的 `und-Zsye`
+  家族里提取系统真正引用的 emoji 文件名（`NotoColorEmoji` / `NotoColorEmojiLegacy` /
+  `NotoColorEmojiFlags` / `MiSansEmoji`），按 `system` / `product` / `system_ext` / `vendor`
+  分区映射到模块内，逐个硬链接一份。只放一个 `NotoColorEmoji.ttf` 会漏。
+- **新增 `system.prop`**：`ro.com.google.gmscore.font_provider.disabled=1`，断掉 GMS 往
+  `/data/fonts` 下发字体（那份优先级高于 `/system/fonts`）。
+- **新增 `service.sh`**：开机完成后清 `/data/fonts`、替换主题字体目录里的 emoji、禁用 GMS
+  `FontsProvider` 与 `UpdateSchedulerService`、清 `font_*.dat` 字形缓存，最后补挂一次。
+- **新增 `action.sh` + `scripts/diag.sh`**：模块详情页「执行」按钮现场挂载并输出诊断，
+  同时写 `/sdcard/emoji_diag.txt`。
+- **安装期清 `disable`**：用同 id 升级时 `disable` 标记会保留，装了却仍是禁用状态 —— 另一种
+  「装了跟没装一样」。现在安装时自动清掉并打印。
+- `uninstall.sh` 清 `/data/adb/chiron_apple_emoji` 状态目录。
+
+### 字体没有任何变化
+
+`Roboto-Regular.ttf` `dcc31ca9…`（69,340,020 B），`NotoColorEmoji.ttf` `9bacf7c3…`
+（60,277,864 B），与 6.5 / 6.5.1 逐字节相同。
+
+---
+
 ## 6.5.1 — 2026-11-07 — 模块 id 回到 chiron_apple_emoji，不再另起一条
 
 6.5 的包是 6.4 换 emoji 换出来的，能装能用，但模块身份在 6.3 那次改错了：6.3 起用了新 id

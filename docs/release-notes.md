@@ -1,22 +1,35 @@
-# Chiron × Apple Emoji 6.5.1
+# Chiron × Apple Emoji 6.5.2
 
 表情库升到 **Emoji 17.0 / iOS 26 字形**。正文一个字没动。
 
 Unicode 17.0 于 2025-09 定稿，苹果在 iOS 26.4 测试版里把这批图画补齐了。这一版把苹果的
 正式美术全部收进字体 —— 不是第三方仿画，也不是 Google Noto 的设计。
 
-## 6.5.1 只改了一件事：模块回到同一条线
+## 6.5.2 修「装上了却还是安卓风格」
 
-6.3 起 KSU 模块换了新 id（`chiron_ksu_font`）。从 5.0 / 6.2 一路装上来的人，管理器里会**多出一条**，
-两条都往 `/system/fonts` 放 `NotoColorEmoji.ttf`。管理器按目录名顺序挂载，后挂的覆盖先挂的、
-**不看版本号** —— 结果旧那份 16.0 字体赢了，新表情只剩一个空位。
+6.5 / 6.5.1 只靠模块自带的 `system/fonts/` 目录（overlay）。本机 Android 17 实测 overlay
+不保证生效：`/system/fonts/NotoColorEmoji.ttf` 仍是系统原版。于是 emoji 能显示（系统自带 Noto
+也有这些码位），但画出来是**安卓风格**，不是苹果的。回退点在 6.3 —— 那一版重写模块时，
+把 5.0 里的四道保险删掉了。
 
-6.5.1 把 id 改回 `chiron_apple_emoji`（5.x / 6.2 那条），`versionCode` 10，装上去是升级覆盖，
-不会并列。安装时还会扫一遍 `/data/adb/modules`，把仍在改同一批字体的模块点名打出来。
+6.5.2 把 5.0 的做法整套搬回来：
 
-**字体一个字没变**：`Roboto-Regular.ttf` 仍是 `dcc31ca9…`，`NotoColorEmoji.ttf` 仍是 `9bacf7c3…`。
+| 保险 | 在哪 | 作用 |
+|---|---|---|
+| 禁用 GMS 字体下发 | `system.prop` | `/data/fonts` 优先级高于 `/system/fonts`，不禁止就会盖回来 |
+| 铺满 emoji 文件名 | `customize.sh` | 解析 `fonts.xml` / `font_fallback.xml`，把系统真正引用的 `NotoColorEmoji` / `NotoColorEmojiLegacy` / `NotoColorEmojiFlags` / `MiSansEmoji` 逐个接管 |
+| bind mount | `post-fs-data.sh` | `mount --bind` 到每个 `*Emoji*.ttf` 位点，并 `chcon system_file`；bind 是内核行为，不依赖 KSU 挂载实现 |
+| 清缓存 + 关 provider | `service.sh` | 开机后清 `/data/fonts`、主题字体目录、字形缓存，再关掉 GMS FontsProvider |
 
-从 6.3 / 6.4 / 6.5 过来的话：装 6.5.1 → 卸载 `Chiron × Apple Emoji（类原生）`（id `chiron_ksu_font`）→ 重启。
+另外，安装期会清掉自身目录下的 `disable` 标记：用同 id 升级时装了却仍是禁用状态，
+是另一种「装了跟没装一样」。
+
+**字体没变**：`Roboto-Regular.ttf` `dcc31ca9…`（69,340,020 B），
+`NotoColorEmoji.ttf` `9bacf7c3…`（60,277,864 B）。
+
+装了没效果：模块详情页点「执行」，会现场挂载并打印诊断，同时写到 `/sdcard/emoji_diag.txt`。
+
+从 6.3 / 6.4 / 6.5 过来的话：装 6.5.2 → 卸载 `Chiron × Apple Emoji（类原生）`（id `chiron_ksu_font`）→ 重启。
 
 ## 新增的表情
 
@@ -39,9 +52,9 @@ Unicode 17.0 于 2025-09 定稿，苹果在 iOS 26.4 测试版里把这批图画
 |---|---|---|---|
 | `Chiron-Merriweather_v6.5_AppleEmoji.mtz` | 124.8 MiB | 没 Root，MIUI / HyperOS，字体 + Apple emoji | 本版未改，见 [v6.5](https://github.com/Cheney34/chiron-apple-emoji/releases/tag/v6.5) 附件 |
 | `Chiron-Merriweather_v6.5.mtz` | 37.0 MiB | 没 Root，只要字体，不动 emoji | 本版未改，同上 |
-| `Chiron_KSU_Font_A17_v6.5.1.zip` | 92.7 MiB | 有 Root（KernelSU / Magisk / APatch），类原生 AOSP | 管理器刷入 → 重启 |
+| `Chiron_KSU_Font_A17_v6.5.2.zip` | 92.7 MiB | 有 Root（KernelSU / Magisk / APatch），类原生 AOSP | 管理器刷入 → 重启 |
 
-两个 MTZ 只能装一个。KSU 模块只能留一个：6.5.1 安装时会扫描并点名其它也在改同一批字体的模块，
+两个 MTZ 只能装一个。KSU 模块只能留一个：6.5.2 安装时会扫描并点名其它也在改同一批字体的模块，
 按它给的清单卸掉，再重启。
 
 > 本页只发字体成品。搜狗表情面板的模块已迁到 [apple-input-for-sogou](https://github.com/Cheney34/apple-input-for-sogou)
@@ -100,7 +113,7 @@ HyperOS / MIUI 建议直接用 MTZ：KSU 模块是照类原生 AOSP 的 `font_fa
 |---|---|---|
 | `Chiron-Merriweather_v6.5.mtz` | 38,823,783 | `d139a38d1f7dd28c` |
 | `Chiron-Merriweather_v6.5_AppleEmoji.mtz` | 130,835,906 | `184078e19263c8da` |
-| `Chiron_KSU_Font_A17_v6.5.1.zip` | 97,225,596 | `45a9bc288131ba1b` |
+| `Chiron_KSU_Font_A17_v6.5.2.zip` | 97,234,273 | `fd923fb1a2a11447` |
 
 ## 已知限制
 

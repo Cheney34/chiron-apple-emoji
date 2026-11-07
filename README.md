@@ -19,7 +19,7 @@
 |---|---|---|
 | 项目 / Release | **6.5**（tag `v6.5`） | — |
 | MTZ 主题（免 Root） | 6.5 | `Chiron-Merriweather_v6.5.mtz` / `Chiron-Merriweather_v6.5_AppleEmoji.mtz` |
-| 类原生 KSU 模块 | 6.5.1（versionCode 10，id `chiron_apple_emoji`） | `Chiron_KSU_Font_A17_v6.5.1.zip` |
+| 类原生 KSU 模块 | 6.5.2（versionCode 11，id `chiron_apple_emoji`） | `Chiron_KSU_Font_A17_v6.5.2.zip` |
 | Magisk 版模块 | 6.2（versionCode 9） | 不在 6.5 发行内，源码仍在 [`magisk-module/`](magisk-module/) |
 | 搜狗 LSPosed 模块 | 1.8（versionCode 10） | 本仓库内已冻结；新版见 [apple-input-for-sogou](https://github.com/Cheney34/apple-input-for-sogou) **v2.1.1** |
 | emoji 字体资源 | **Emoji 17.0 / iOS 26**（3946 条序列） | 128 ppem 高位图 / 32·45·60 三档真彩 |

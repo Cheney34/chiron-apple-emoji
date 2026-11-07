@@ -39,3 +39,7 @@ Thumbs.db
 *.log
 *.tmp
 .tmp.png
+
+# fetch17.py / build17.py 的中间产物
+emoji-font/img/
+emoji-font/emoji.fea

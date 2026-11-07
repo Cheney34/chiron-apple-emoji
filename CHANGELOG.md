@@ -4,6 +4,76 @@
 
 ---
 
+## 6.5 — 2026-11-07 — 表情库升到 Emoji 17.0（iOS 26 字形）
+
+正文一个字没动，只换 emoji：`fonts/NotoColorEmoji.ttf` 从 Emoji 16.0 换到 **17.0**。
+
+### 新了什么
+
+Unicode 17.0 / Emoji 17.0 于 2025-09 定稿，共 163 项（7 个基字符 + 芭蕾舞者 + 6 个老表情的
+肤色变体 + 150 条 ZWJ 序列）。本版把 Apple 的 iOS 26 版本图画全部收进字体：
+
+| 码位 | 表情 | 名称 |
+|---|---|---|
+| U+1FAEA | 🫪 | 变形的脸 / distorted face |
+| U+1FAEF | 🫯 | 打斗云团 / fight cloud |
+| U+1FAC8 | 🫈 | 毛怪 / hairy creature |
+| U+1FACD | 🫍 | 虎鲸 / orca |
+| U+1F6D8 | 🛘 | 山体滑坡 / landslide |
+| U+1FA8A | 🪊 | 长号 / trombone |
+| U+1FA8E | 🪎 | 宝箱 / treasure chest |
+| U+1F9D1 U+200D U+1FA70 | 🧑‍🩰 | 芭蕾舞者（含 5 档肤色） |
+
+`👯` 戴兔耳朵的人 / `🤼` 摔跤选手 及其男女版本，17.0 才补上肤色，本版一并收进字体。
+Emoji 17.0 定稿时去掉了 U+1FADD 苹果核，所以清单里没有它 —— 上游 `iamcal/emoji-data`
+的 17.0 集合同样没有，两边一致。
+
+### 数字
+
+| 项 | 6.4（Emoji 16.0） | 6.5（Emoji 17.0） |
+|---|---|---|
+| Apple 序列数 | 3808 | **3946**（+138） |
+| 字形数 | 3842 | **4006** |
+| cmap 基字符 | 1445 | **1452** |
+| `GSUB` 连字 | 3553 | **3730** |
+| MTZ 内 emoji 字体 | 87.8 MB | **92.4 MB** |
+| KSU 内 emoji 字体 | 57.1 MB | **60.3 MB** |
+
+### 位图从哪来
+
+npm 的 `emoji-datasource-apple` 停在 16.0.0，没有 17.0 的图。改从 `iamcal/emoji-data`
+的 master 取，并固定到 commit `e77759c2`：其 `img-apple-160/1faea.png` 与 Emojipedia
+的 `em-content.zobj.net/source/apple/453/…`（iOS 26.4 测试版美术）**逐像素一致**，
+所以这套图确实是苹果 iOS 26 的版本画，不是第三方仿画。
+
+`emoji-font/fetch17.py`（新增）把这条链路固化：流式解 tarball 只取 `img-apple-160/`，
+约 100 MB，不再需要 npm 包。
+
+### 没动的
+
+- **正文三渠道仍同一份**：`Roboto-Regular.ttf` 69,340,020 B，sha256 `dcc31ca9…`，
+  与 6.4 完全一致。
+- **MTZ 里的预览图、`description.xml` 布局、KSU 的安装脚本**逐字节保留；
+  只改版本串与 emoji 字体本身。
+- 位图档位沿用 6.4 的规格：MTZ 单档 128 ppem、KSU `32,45,60` 三档真彩。
+  **没有**为了让新表情更清楚而偷偷改档位——那会让体积和上一版不可比。
+
+### 新增工具
+
+- **`tools/repack_emoji.py`**：只替换成品包里的 emoji 字体，其余条目沿用原 `ZipInfo`
+  （压缩方式、权限位、时间戳）。KSU 丢 755、MTZ 正文字体被重压缩这两个坑在这里堵住。
+- **`emoji-font/fetch17.py`**：抓 17.0 位图与元数据，上游固定 commit。
+- `emoji-font/build17.py`：字体名字表版本串改 `Apple17.0v5`；`emoji.fea` 中间文件改为
+  写在脚本同目录（原来硬编码 `/root/work/`，换机器就崩）。
+
+### 配套
+
+搜狗输入法表情面板的接管模块在 [apple-input-for-sogou](https://github.com/Cheney34/apple-input-for-sogou)，
+本版同步发 **v2.1.1**：`info.xml` 补 8 条新条目、给 6 个老表情打开肤色，payload 从
+3868 → 3911 条目（2075 个表情位图 + 肤色变体，源图换成 17.0）。
+
+---
+
 ## 6.4 — 2026-11-06 — 私用区 U+F8FF 换成苹果 logo
 
 只动一个字形，其余与 6.3_refix 逐像素一致。

@@ -25,9 +25,9 @@ ADV = 2400
 # 档位再少就只剩一档，系统缩放到其他字号会发虚；不要回到 v6.2 那种单档 128 的写法。
 STRIKES = [int(x) for x in
            os.environ.get("STRIKES", "32,45,60,82,128").split(",") if x.strip()]
-IMGDIR = os.environ.get("IMGDIR", "/root/work/emoji/img16")
-JSONF = os.environ.get("JSONF", "/root/work/emoji/emoji16.json")
-OUT = os.environ.get("OUT", "/root/work/emoji/NotoColorEmoji_v5.ttf")
+IMGDIR = os.environ.get("IMGDIR", os.path.join(os.path.dirname(os.path.abspath(__file__)), "img"))
+JSONF = os.environ.get("JSONF", os.path.join(os.path.dirname(os.path.abspath(__file__)), "emoji-data.json"))
+OUT = os.environ.get("OUT", os.path.join(os.path.dirname(os.path.abspath(__file__)), "NotoColorEmoji.ttf"))
 LIMIT = int(os.environ.get("LIMIT", "0"))
 ZWJ, VS16, VS15 = 0x200D, 0xFE0F, 0xFE0E
 
@@ -157,10 +157,10 @@ def main():
     fb.setupNameTable({
         "familyName": "Noto Color Emoji",
         "styleName": "Regular",
-        "uniqueFontIdentifier": "NotoColorEmoji;Apple16.0v5;2026",
+        "uniqueFontIdentifier": "NotoColorEmoji;Apple17.0v5;2026",
         "fullName": "Noto Color Emoji",
         "psName": "NotoColorEmoji",
-        "version": "Version 16.0v5",
+        "version": "Version 17.0v5",
     })
     fb.setupOS2(sTypoAscender=1900, sTypoDescender=-500, sTypoLineGap=0,
                 usWinAscent=1900, usWinDescent=500, usWeightClass=400, fsType=0)
@@ -253,7 +253,7 @@ def main():
         for comps, gn in ligs:
             lines.append("  sub %s by %s;" % (" ".join(comps), gn))
         lines.append("} ccmp;")
-        open("/root/work/emoji/emoji16.fea", "w").write("\n".join(lines))
+        open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "emoji.fea"), "w").write("\n".join(lines))
         addOpenTypeFeaturesFromString(font, "\n".join(lines))
         print("GSUB built", flush=True)
 

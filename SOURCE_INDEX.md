@@ -1,15 +1,15 @@
 # Chiron 项目源码索引（2026-11-05）
 
-本包内是当前最新的全部源码，对应出货版本 **v6.3_refix**。
+本包内是当前最新的全部源码，对应出货版本 **v6.5**。
 
 ## 版本对照
 
 | 源码目录 | 对应出货文件 | 版本 |
 |---|---|---|
 | `lsposed-sogou/` | `Chiron_Emoji_Sogou_LSPosed_v1.8.apk` | v1.8 |
-| `chiron-font/` | `Chiron-Merriweather_v6.3_refix_20261105.mtz`<br>`Chiron-Merriweather_v6.3_refix_AppleEmoji_20261105.mtz` | v6.3_refix |
-| `ksu-module/` | `Chiron_KSU_Font_A17_v6.3_refix.zip` | v6.3_refix |
-| `emoji-font/` | 上两个 mtz 与 KSU 包内的 `NotoColorEmoji.ttf` | — |
+| `chiron-font/` | `Chiron-Merriweather_v6.5.mtz`<br>`Chiron-Merriweather_v6.5_AppleEmoji.mtz` | v6.5 |
+| `ksu-module/` | `Chiron_KSU_Font_A17_v6.5.zip` | v6.5 |
+| `emoji-font/` | 上两个 mtz 与 KSU 包内的 `NotoColorEmoji.ttf` | Emoji 17.0 / iOS 26 |
 | `magisk-module/` | 未出货（Magisk 版，审计未过） | — |
 
 ## 各目录说明
@@ -40,7 +40,7 @@ icons/                  分组图标源图
 cd lsposed-sogou && ./build.sh
 ```
 
-`payload.zip` 未包含在本包内（23 MB，且与 v1.7 完全相同，md5 一致），需要时直接从 `Chiron_Emoji_Sogou_LSPosed_v1.8.zip` 里取。
+`payload.zip` 未包含在本包内（24 MB，Emoji 17.0 素材，3911 条目），由 `tools/make_payload.py` 从本地素材生成。
 
 ### chiron-font/ —— 字体合并与字形修正
 

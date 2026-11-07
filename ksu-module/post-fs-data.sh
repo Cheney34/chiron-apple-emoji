@@ -5,7 +5,7 @@
 LOG=/data/local/tmp/chiron_font.log
 
 {
-    echo "=== $(date) chiron_ksu_font ==="
+    echo "=== $(date) chiron_apple_emoji ==="
     echo
 
     echo "[字体文件]"

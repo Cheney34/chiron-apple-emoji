@@ -1,6 +1,6 @@
-id=chiron_ksu_font
-name=Chiron × Apple Emoji（类原生）
-version=v6.3_refix
-versionCode=6
+id=chiron_apple_emoji
+name=Apple Color Emoji (Chiron 配套)
+version=v6.5.1
+versionCode=10
 author=Cheney34
-description=把 Chiron GoRound TC + Merriweather 装进类原生 AOSP，并替换成 Apple 彩色 emoji。只覆盖文件名，不改 system 分区。v6.3_refix 星号改为直角六角星，尺寸对齐系统原星号（Roboto 394×361），修掉拨号盘按键偏大偏下的问题。
+description=把 Chiron GoRound TC + Merriweather 与 Apple 彩色 emoji 一起装进类原生 AOSP（Emoji 17.0 / iOS 26 字形）。只覆盖文件名，不改 system 分区。模块 id 沿用 5.x / 6.2 的 chiron_apple_emoji，不再另起新模块；6.3–6.5 临时用的 chiron_ksu_font 请卸载，两个模块抢同一批字体，后挂载的会盖掉先挂载的。

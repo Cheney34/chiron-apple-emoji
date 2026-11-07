@@ -4,6 +4,36 @@
 
 ---
 
+## 6.5.1 — 2026-11-07 — 模块 id 回到 chiron_apple_emoji，不再另起一条
+
+6.5 的包是 6.4 换 emoji 换出来的，能装能用，但模块身份在 6.3 那次改错了：6.3 起用了新 id
+`chiron_ksu_font`，于是从 5.0 / 6.2 一路装上来的人，KSU 列表里会**多出一条**。两条都往
+`/system/fonts` 放 `NotoColorEmoji.ttf`，谁生效取决于目录名排序，不看版本号。表现就是
+「替换成功了、位置也占了，但图是空的」—— 旧模块那份 16.0 字体赢了。
+
+### 改了什么
+
+- `module.prop` 回到 `id=chiron_apple_emoji`（5.x / 6.2 那条线），`versionCode` 10（5.0 是 5，6.2 是 9），
+  装上去是**升级覆盖**，不会并列。
+- 正文与 emoji 仍在同一个包里（沿用 6.3 起的一体包，不拆回 emoji-only）。
+- `customize.sh` 增加冲突检测：安装时扫 `/data/adb/modules/*/module.prop`，谁也在提供
+  `NotoColorEmoji.ttf` 或 `Roboto*.ttf`，就在安装界面点名打印 id / 版本 / 名字，并说明
+  「后挂载的覆盖先挂载的」。只报告，不替用户禁用别人的模块。检测到 `chiron_ksu_font` 时额外提示卸载。
+- `post-fs-data.sh` 日志头从 `chiron_ksu_font` 改为 `chiron_apple_emoji`。
+- `ksu-module/README.md` 补「从 6.3–6.5 迁回来」一节；`ksu-module/module.prop` 与出货包对齐
+  （6.5 之前这里还停在 `v6.3_refix` / versionCode 6，照仓库构建出不来 6.5）。
+
+### 字体没有任何变化
+
+`Roboto-Regular.ttf` 仍是 `dcc31ca9…`（69,340,020 B），`NotoColorEmoji.ttf` 仍是 `9bacf7c3…`
+（60,277,864 B）。6.5.1 只改装法，字形与 6.5 逐字节相同。
+
+### 从 6.3 / 6.4 / 6.5 过来
+
+装 6.5.1 → 到模块列表卸载 `Chiron × Apple Emoji（类原生）`（id `chiron_ksu_font`）→ 重启。
+
+---
+
 ## 6.5 — 2026-11-07 — 表情库升到 Emoji 17.0（iOS 26 字形）
 
 正文一个字没动，只换 emoji：`fonts/NotoColorEmoji.ttf` 从 Emoji 16.0 换到 **17.0**。

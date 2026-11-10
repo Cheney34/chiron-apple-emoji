@@ -96,5 +96,5 @@ MTZ 6.7.1：
 - `Chiron-Merriweather_v6.7.1.mtz` — 38,823,887 B（纯字体）
 - `Chiron-Merriweather_v6.7.1_AppleEmoji.mtz` — 130,835,966 B（+ Apple emoji）
 
-（这一版是在进程创建全崩的机器上做的：PowerShell 直接改字体字节、进程内 `ZipFile` 重打包。
-没能跑 `fontTools` 复核，也没能推 GitHub —— 仓库里改动齐全，环境恢复后照常构建。）
+（这一版是在进程创建全崩的机器上做的：PowerShell 直接改字体字节、进程内 `ZipFile` 重打包，
+没能跑 `fontTools` 复核。字体表结构与 6.6 / 6.7 逐字节对齐，`head.checkSumAdjustment` 已重算。）

@@ -1,6 +1,84 @@
 # 变更记录
 
-版本号规则：项目、Root 模块、MTZ 主题共用同一个语义化版本号；emoji 字体资源单独编号（`Emoji-R6-HD` / `Emoji-R6-Compact`），因为同一发行版本下两条通道的位图档数本来就不同。
+版本号规则：模块与 MTZ 主题各自按自己的线递增（本次：模块 **6.7**、MTZ **6.7.1**），两者可以不同号；emoji 字体资源单独编号（`Emoji-R6-HD` / `Emoji-R6-Compact`），因为同一发行版本下两条通道的位图档数本来就不同。
+
+---
+
+## 6.7.1 — 2026-11-10 — MTZ：字重可调回来
+
+> 版本号拆分说明：**模块线 = 6.7**（`version=v6.7`、`versionCode=13`，
+> `Chiron_KSU_Font_A17_v6.7.zip`），**MTZ 主题线 = 6.7.1**
+> （`Chiron-Merriweather_v6.7.1.mtz` / `..._AppleEmoji.mtz`）。
+> 6.7 只出过 MTZ（静态正文那版），模块的上一版是 6.6，所以模块这一版顺位是 6.7；
+> MTZ 在 6.7 上补一块，编号 6.7.1。
+
+6.7 为了修「WebView 里日期、天气不渲染」，把正文 `Roboto-Regular.ttf` 静态化了 ——
+`fvar` / `gvar` / `STAT` 全删，`description.xml` 的 `<fontWeight>` 从 12 档收成 1 档。
+结果小米的「字体粗细」滑块锁死：滑块靠字体里的 `wght` 轴做无级插值，轴没了就没得插。
+
+**改法**：正文换回带完整 `wght 150–700` 的版本，只保留 6.7 里真正有用的那一刀 ——
+`OS/2.usWeightClass` `330 → 400`，和系统 `Roboto-Regular` 槽位要的 400 对齐；
+`head.checkSumAdjustment` 重算（实测 `0xB1B0AFBA`，规范值）。`glyf` / `loca` / `cmap` /
+`hmtx` / `GSUB` / `GPOS` / `name` 一字节没动。`description.xml` 恢复 12 档
+`150,200,…,700`，`<version>` 写 `6.7.1`。
+
+已知取舍：轴回来，「公众号日期空白」**可能复发**。装上先拖滑块确认能无级调，再开一篇带
+日期的公众号文章看；真复发就装回 6.7（静态、无滑杆）。
+
+---
+
+## 6.7 — 2026-11-10 — 模块：光标消失 / 组合 emoji 被拆 / WebUI
+
+三条反馈，三条都不一样。
+
+### 1. 微信、抖音输入框没有光标
+
+6.5.1 起模块把 66 MB 的 `Chiron GoRound TC VF` 写进 `system/fonts/Roboto-Regular.ttf`。
+它是个可变字体：`OS/2.usWeightClass = 330`，`fvar` 默认实例也是 330，而系统字体配置按 **400**
+去匹配；`gvar` 41 MB，渲染前要按字重把 5 万个字形实例化一遍。装了这个正文字体的机器上，
+微信和抖音的输入框光标会消失，公众号页的日期、天气卡片也不刷新（WebView 首屏排版时
+那段文本整段跳过）。5.0 / 6.2 只换 emoji、不碰正文，所以从来没有这个毛病。
+
+**改法**：正文字体挪到 `files/`，**默认不挂载**（`BODY=0`），回到 5.0 的行为。
+需要时在 WebUI 里打开。字体本身同时静态化：删 `fvar` / `gvar` / `STAT` / `DSIG`，
+`usWeightClass` 改 400，69,340,020 B → 28,111,052 B。
+
+### 2. `🙂‍↕️ 🙂‍↔️ 🫨` 显示有误 / 空白
+
+emoji 字体本身是完好的 —— 4006 字形、3730 条连字，`1F642 200D 2195 FE0F` 的连字字形
+（gid 2158）在 5 个档位里都有位图。问题在**正文字体抢了组件码位**：
+
+Chiron 是 CJK 字体，把 `U+2194 ↔`、`U+2195 ↕`、`U+2640 ♀`、`U+2642 ♂`、`U+27A1 ➡`
+当成全角符号收进了 cmap（advance 1000，单位 1000）。系统逐字符挑字体，这几个字符落到
+正文字体上 → 一个 ZWJ 组合被切成两段 → 连字不成立 → 画出来是「彩脸 + 黑白箭头」。
+把 `U+FE0F` 去掉再交给 emoji 字体时，`U+2195` 的占位字形是 1×1 透明位图 + 2400 advance，
+于是变成一段空白。
+
+**改法**：从正文字体的 cmap 里摘掉这 5 个码位（只重写 cmap 表，`glyf` / `loca` / `hmtx` /
+`GSUB` / `GPOS` / `name` 一字节没动，表目录与 `head.checkSumAdjustment` 重算）。
+这 5 个字符此后只有 emoji 字体一个来源，组合能落进同一个字体，连字生效。
+其余 95 个组件码位（键帽 `U+20E3`、区域指示符、肤色修饰符等）本来就不在正文字体里，无需处理。
+
+### 3. WebUI
+
+模块内新增 `webroot/index.html`，KernelSU 模块详情页多一个入口：
+
+- 状态：emoji 接管位点数、正文字体是否挂载、当前开关
+- 表情包：`Apple 17.0` ↔ `系统原厂`（选原厂会把模块内 emoji 字体移到 `files/off/`，
+  否则 KSU 的 overlay 仍然会盖上去）
+- 正文字体：`不换（默认）` ↔ `换成 Apple 字体`
+- 操作：立即重挂载 / 运行诊断 / 导出日志到 `/sdcard/Download/` / 重启
+
+开关落在 `/data/adb/chiron_apple_emoji/settings.conf`，`post-fs-data.sh` 与 `service.sh`
+都按它决定挂不挂；`scripts/set-state.sh` 是同一套逻辑的命令行入口。
+
+### 其它
+
+- 包体 237.2 MB → 209.9 MB（正文少了 41 MB 的 `gvar`，emoji 5 档回来；大文件改用
+  deflate 压缩，比上一版「同内容 stored」又小 17 MB）。
+- `customize.sh` 在 `EMOJI=0` 时会把新包里的 emoji 字体重新挪回 `files/off/`，升级不会偷偷打开。
+- 本机进程创建全线崩溃（`0xC0000005`），这一版是用 PowerShell 直接改字体字节 + 手写 zip
+  目录做出来的，没能用 `fontTools` 复核、也没能推 GitHub；改动都在仓库里，环境恢复后照常构建。
 
 ---
 

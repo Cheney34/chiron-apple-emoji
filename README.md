@@ -17,14 +17,14 @@
 
 | 组件 | 版本 | 产物 |
 |---|---|---|
-| 项目 / Release | **6.5**（tag `v6.5`） | — |
-| MTZ 主题（免 Root） | 6.5 | `Chiron-Merriweather_v6.5.mtz` / `Chiron-Merriweather_v6.5_AppleEmoji.mtz` |
-| 类原生 KSU 模块 | 6.6（versionCode 12，id `chiron_apple_emoji`） | `Chiron_KSU_Font_A17_v6.6.zip` |
-| Magisk 版模块 | 6.2（versionCode 9） | 不在 6.5 发行内，源码仍在 [`magisk-module/`](magisk-module/) |
+| 项目 / Release | **6.7.1**（tag `v6.7.1`） | — |
+| MTZ 主题（免 Root） | 6.7.1 | `Chiron-Merriweather_v6.7.1.mtz` / `Chiron-Merriweather_v6.7.1_AppleEmoji.mtz` |
+| 类原生 KSU 模块 | 6.7（versionCode 13，id `chiron_apple_emoji`） | `Chiron_KSU_Font_A17_v6.7.zip` |
+| Magisk 版模块 | 6.2（versionCode 9） | 不在 6.7 发行内，源码仍在 [`magisk-module/`](magisk-module/) |
 | 搜狗 LSPosed 模块 | 1.8（versionCode 10） | 本仓库内已冻结；新版见 [apple-input-for-sogou](https://github.com/Cheney34/apple-input-for-sogou) **v2.1.1** |
-| emoji 字体资源 | **Emoji 17.0 / iOS 26**（3946 条序列） | 128 ppem 高位图 / 32·45·60 三档真彩 |
+| emoji 字体资源 | **Emoji 17.0 / iOS 26**（3946 条序列） | 128 ppem 高位图 / 32·45·60·82·128 五档真彩 |
 
-改动记录见 [CHANGELOG.md](CHANGELOG.md)。版本号规则：项目、Root、MTZ 共用同一个语义化版本；字体资源单独编号，因为同一个版本号下两条通道的位图档数不同。
+改动记录见 [CHANGELOG.md](CHANGELOG.md)。版本号规则：模块与 MTZ 主题各自按自己的线递增（本次模块 6.7、MTZ 6.7.1），可以不同号；字体资源单独编号，因为同一个版本号下两条通道的位图档数不同。
 
 ## 该装哪个
 

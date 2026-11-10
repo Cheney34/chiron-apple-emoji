@@ -13,11 +13,18 @@ EMOJI_SRC=$MODDIR/system/fonts/NotoColorEmoji.ttf
 EMOJI_SZ=$(stat -c%s "$EMOJI_SRC" 2>/dev/null)
 
 BODY_SRC=""
-for f in "$MODDIR"/system/fonts/Roboto*; do
+for f in "$MODDIR"/files/Roboto* "$MODDIR"/system/fonts/Roboto*; do
     [ -f "$f" ] || continue
     BODY_SRC="$f"
     break
 done
+
+CONF=$STATE/settings.conf
+EMOJI_ON=1
+BODY_ON=0
+[ -f "$CONF" ] && . "$CONF" 2>/dev/null
+case "$EMOJI_ON" in 0|1) ;; *) EMOJI_ON=1 ;; esac
+case "$BODY_ON"  in 0|1) ;; *) BODY_ON=0  ;; esac
 
 : > "$OUT" 2>/dev/null || OUT=/data/local/tmp/emoji_diag.txt
 
@@ -52,16 +59,18 @@ if [ -d /data/adb/modules/chiron_ksu_font ]; then
 fi
 
 hdr "模块字体"
+say "开关: EMOJI=$EMOJI_ON  BODY=$BODY_ON   ($CONF)"
 say "emoji: $EMOJI_SRC"
 say "       字节数 $EMOJI_SZ"
 say "       指纹   $(sha256sum "$EMOJI_SRC" 2>/dev/null | cut -c1-16)"
+say "       已移出 $(ls -1 "$MODDIR/files/off" 2>/dev/null | wc -l) 个文件（关掉 emoji 时的备份）"
 # 6.3–6.5.2 只做了 3 档（38/53/70 px），大字号请求 96/150 px 时找不到 strike，
 # Minikin 会判定字体不可用并回退到系统的 AOSP 字形。5 档约 190 MB，3 档约 57 MB。
 if [ "${EMOJI_SZ:-0}" -ge 130000000 ]; then
     say "       档位   5 档（38/53/70/96/150 px）—— 正常"
 else
     say "       档位   !! 只有 3 档（38/53/70 px），大字号会掉回 Android 字形"
-    say "       建议   换 6.6 的包（emoji 恢复到 5 档）"
+    say "       建议   换 6.7 的包（emoji 恢复到 5 档）"
 fi
 if [ -n "$BODY_SRC" ]; then
     say "正文 : $(basename "$BODY_SRC")  $(stat -c%s "$BODY_SRC" 2>/dev/null) 字节"
@@ -146,8 +155,11 @@ for f in /system/fonts/*[Ee]moji*.ttf; do
     TOTAL=$((TOTAL + 1))
     [ "$(stat -c%s "$f" 2>/dev/null)" = "$EMOJI_SZ" ] && OURS=$((OURS + 1))
 done
-if [ -e "$MODDIR/disable" ]; then
-    say "  模块被禁用（disable 标记）。到模块列表打开它，或重装 6.6+（安装时会自动清掉）。"
+if [ "$EMOJI_ON" = "0" ]; then
+    say "  emoji 开关是关的（系统原厂字形），系统里显示 AOSP 表情属预期。"
+    say "  想换回 Apple：WebUI → 表情包 → Apple 17.0 → 重启。"
+elif [ -e "$MODDIR/disable" ]; then
+    say "  模块被禁用（disable 标记）。到模块列表打开它，或重装 6.7+（安装时会自动清掉）。"
 elif [ "$TOTAL" -eq 0 ]; then
     say "  系统里找不到任何 emoji 字体文件，ROM 结构异常。"
 elif [ "$OURS" -eq "$TOTAL" ]; then

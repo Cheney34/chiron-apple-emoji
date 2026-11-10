@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Chiron × Apple Emoji</title>
+<style>
+  :root{
+    --bg:#f5f5f7; --card:#ffffff; --fg:#1c1c1e; --sub:#6b6b70;
+    --line:rgba(0,0,0,.08); --accent:#0a84ff; --ok:#1a7f37; --warn:#b25000; --bad:#c0392b;
+    --chip:rgba(10,132,255,.10);
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#0d0d0f; --card:#1b1b1e; --fg:#f2f2f7; --sub:#9b9ba1;
+      --line:rgba(255,255,255,.10); --accent:#0a84ff; --ok:#32d74b; --warn:#ff9f0a; --bad:#ff453a;
+      --chip:rgba(10,132,255,.18);
+    }
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{
+    margin:0;padding:16px 14px 40px;background:var(--bg);color:var(--fg);
+    font:15px/1.5 -apple-system,system-ui,"Segoe UI","PingFang SC","Noto Sans CJK SC",sans-serif;
+  }
+  h1{font-size:19px;margin:0 0 2px;letter-spacing:.2px}
+  .sub{color:var(--sub);font-size:12.5px}
+  .top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:14px}
+  .badge{font-size:11.5px;padding:4px 9px;border-radius:999px;background:var(--chip);color:var(--accent);white-space:nowrap}
+  .card{background:var(--card);border-radius:16px;padding:14px;margin-bottom:12px;border:1px solid var(--line)}
+  .card h2{font-size:13px;margin:0 0 10px;color:var(--sub);font-weight:600;letter-spacing:.4px;text-transform:uppercase}
+  .row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px solid var(--line)}
+  .row:last-child{border-bottom:0}
+  .row .k{color:var(--sub);font-size:13px}
+  .row .v{font-size:13.5px;font-variant-numeric:tabular-nums;text-align:right;word-break:break-all}
+  .ok{color:var(--ok)} .warn{color:var(--warn)} .bad{color:var(--bad)}
+  .seg{display:flex;background:var(--chip);border-radius:12px;padding:3px;gap:3px}
+  .seg button{
+    flex:1;border:0;background:transparent;color:var(--fg);font-size:13.5px;
+    padding:9px 6px;border-radius:9px;font-family:inherit;
+  }
+  .seg button.on{background:var(--card);box-shadow:0 1px 3px rgba(0,0,0,.18);font-weight:600}
+  @media (prefers-color-scheme: dark){.seg button.on{background:#2c2c30;box-shadow:none}}
+  .hint{color:var(--sub);font-size:12px;margin-top:8px;line-height:1.45}
+  .btns{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+  .btn{
+    border:1px solid var(--line);background:var(--card);color:var(--fg);font-family:inherit;
+    font-size:13.5px;padding:12px 8px;border-radius:12px;
+  }
+  .btn.primary{background:var(--accent);color:#fff;border-color:transparent}
+  .btn.danger{color:var(--bad)}
+  .btn:disabled{opacity:.45}
+  pre{
+    margin:0;padding:11px;background:rgba(127,127,127,.12);border-radius:11px;
+    font:11.5px/1.45 ui-monospace,SFMono-Regular,Menlo,monospace;
+    white-space:pre-wrap;word-break:break-all;max-height:260px;overflow:auto;color:var(--fg);
+  }
+  .toast{
+    position:fixed;left:50%;bottom:26px;transform:translate(-50%,20px);opacity:0;
+    background:rgba(28,28,30,.94);color:#fff;padding:10px 16px;border-radius:999px;
+    font-size:13px;transition:.25s;pointer-events:none;max-width:86vw;text-align:center;
+  }
+  .toast.show{opacity:1;transform:translate(-50%,0)}
+  .nobridge{background:rgba(255,69,58,.12);color:var(--bad);border-radius:12px;padding:10px 12px;font-size:12.5px;margin-bottom:12px}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <div>
+    <h1>Chiron × Apple Emoji</h1>
+    <div class="sub" id="verline">读取中…</div>
+  </div>
+  <div class="badge" id="state">…</div>
+</div>
+
+<div id="nobridge"></div>
+
+<div class="card">
+  <h2>状态</h2>
+  <div class="row"><span class="k">emoji 接管</span><span class="v" id="s-emoji">—</span></div>
+  <div class="row"><span class="k">emoji 字体</span><span class="v" id="s-emoji-sz">—</span></div>
+  <div class="row"><span class="k">正文字体</span><span class="v" id="s-body">—</span></div>
+  <div class="row"><span class="k">开关</span><span class="v" id="s-conf">—</span></div>
+</div>
+
+<div class="card">
+  <h2>表情包</h2>
+  <div class="seg" id="seg-emoji">
+    <button data-v="on">Apple 17.0</button>
+    <button data-v="off">系统原厂</button>
+  </div>
+  <div class="hint" id="hint-emoji">切换后需重启一次。选「系统原厂」后模块不再参与 emoji，界面回到 AOSP 字形。</div>
+</div>
+
+<div class="card">
+  <h2>正文字体</h2>
+  <div class="seg" id="seg-body">
+    <button data-v="off">不换（默认）</button>
+    <button data-v="on">换成 Apple 字体</button>
+  </div>
+  <div class="hint">6.5.1 起合入的正文可变字体，字重声明是 330（系统按 400 找），而且在微信、抖音里会让输入框光标消失。所以 6.7 默认不换正文。需要正文字体时再打开，重启生效。</div>
+</div>
+
+<div class="card">
+  <h2>操作</h2>
+  <div class="btns">
+    <button class="btn primary" id="b-remount">立即重挂载</button>
+    <button class="btn" id="b-diag">运行诊断</button>
+    <button class="btn" id="b-export">导出日志</button>
+    <button class="btn danger" id="b-reboot">重启手机</button>
+  </div>
+  <div class="hint">「立即重挂载」会让新启动的 App 用上新字体；系统界面与已开着的 App 要重启才彻底生效。</div>
+</div>
+
+<div class="card">
+  <h2>输出</h2>
+  <pre id="log">点上面的按钮开始。</pre>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function () {
+  var MOD = '/data/adb/modules/chiron_apple_emoji';
+  var STATE = '/data/adb/chiron_apple_emoji';
+  var CONF = STATE + '/settings.conf';
+  var busy = false;
+
+  function $(id) { return document.getElementById(id); }
+
+  function toast(msg, ms) {
+    var t = $('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(t._h);
+    t._h = setTimeout(function () { t.classList.remove('show'); }, ms || 2200);
+  }
+
+  function hasBridge() {
+    return !!(window.ksu && typeof window.ksu.exec === 'function');
+  }
+
+  function sh(cmd) {
+    if (!hasBridge()) return Promise.reject(new Error('no bridge'));
+    return Promise.resolve(window.ksu.exec(cmd)).then(function (r) {
+      if (typeof r === 'string') return r;
+      var out = (r && r.stdout) ? r.stdout : '';
+      if (r && r.stderr) out += (out ? '\n' : '') + r.stderr;
+      return out;
+    });
+  }
+
+  function setLog(s) { $('log').textContent = s; }
+
+  function human(n) {
+    n = parseInt(n, 10);
+    if (!n || isNaN(n)) return '—';
+    if (n > 1048576) return (n / 1048576).toFixed(1) + ' MB';
+    if (n > 1024) return (n / 1024).toFixed(0) + ' KB';
+    return n + ' B';
+  }
+
+  var ST = { emoji: '1', body: '0', live: [], version: '?' };
+
+  function parse(out) {
+    var d = { live: [] };
+    out.split('\n').forEach(function (line) {
+      var i = line.indexOf('=');
+      if (i < 0) return;
+      var k = line.slice(0, i), v = line.slice(i + 1);
+      if (k === 'LIVE') d.live.push(v); else d[k] = v;
+    });
+    return d;
+  }
+
+  function refresh() {
+    var cmd = [
+      'M=' + MOD, 'C=' + CONF,
+      'echo VER=$(grep -m1 "^version=" $M/module.prop 2>/dev/null | cut -d= -f2)',
+      'echo CONF=$(cat $C 2>/dev/null | tr "\\n" " ")',
+      'echo MODEMOJI=$(ls -1 $M/system/fonts/*moji*.ttf 2>/dev/null | wc -l)',
+      'echo OFFDIR=$(ls -1 $M/files/off 2>/dev/null | wc -l)',
+      'echo OUR=$(stat -c%s $M/system/fonts/NotoColorEmoji.ttf 2>/dev/null)',
+      'echo BODYSZ=$(ls -1 $M/files/Roboto* 2>/dev/null | head -1)',
+      'for f in /system/fonts/*moji*.ttf; do [ -e "$f" ] && echo LIVE=$(basename "$f"):$(stat -c%s "$f"); done',
+      'echo BODYLIVE=$(stat -c%s /system/fonts/Roboto-Regular.ttf 2>/dev/null)'
+    ].join('; ');
+
+    return sh(cmd).then(function (out) {
+      var d = parse(out);
+      ST.version = (d.VER || '?').replace(/^v/, '');
+      var conf = (d.CONF || '').trim();
+      var em = /EMOJI=(\d)/.exec(conf);
+      var bo = /BODY=(\d)/.exec(conf);
+      ST.emoji = em ? em[1] : (parseInt(d.MODEMOJI, 10) > 0 ? '1' : '0');
+      ST.body = bo ? bo[1] : '0';
+      ST.live = d.live || [];
+      ST.our = parseInt(d.OUR, 10) || 0;
+
+      $('verline').textContent = ST.version && ST.version !== '?' ? ('v' + ST.version + ' · 模块 WebUI') : '模块 WebUI';
+
+      // emoji 接管情况
+      var taken = 0, total = ST.live.length;
+      if (ST.our > 0) {
+        ST.live.forEach(function (s) {
+          var sz = parseInt(s.split(':').pop(), 10);
+          if (sz === ST.our) taken++;
+        });
+      }
+      var e = $('s-emoji');
+      if (ST.emoji === '0') {
+        e.textContent = '已关闭（系统原厂）'; e.className = 'v warn';
+      } else if (total === 0) {
+        e.textContent = '未找到 emoji 位点'; e.className = 'v bad';
+      } else if (taken === total) {
+        e.textContent = '全部 ' + total + ' 个位点'; e.className = 'v ok';
+      } else if (taken > 0) {
+        e.textContent = taken + ' / ' + total + ' 个位点'; e.className = 'v warn';
+      } else {
+        e.textContent = '未接管（重启试一次）'; e.className = 'v bad';
+      }
+      $('s-emoji-sz').textContent = ST.emoji === '0' ? '—（模块内已移出）' : human(ST.our);
+
+      var b = $('s-body');
+      if (ST.body === '1') {
+        b.textContent = '已开启'; b.className = 'v warn';
+      } else {
+        b.textContent = '未换（系统原样）'; b.className = 'v';
+      }
+      $('s-conf').textContent = 'EMOJI=' + ST.emoji + '  BODY=' + ST.body;
+
+      $('state').textContent = (ST.emoji === '1' && taken === total && total > 0) ? 'Apple 生效中'
+        : (ST.emoji === '0' ? '系统原厂' : '待确认');
+
+      document.querySelectorAll('#seg-emoji button').forEach(function (x) {
+        x.classList.toggle('on', x.dataset.v === (ST.emoji === '1' ? 'on' : 'off'));
+      });
+      document.querySelectorAll('#seg-body button').forEach(function (x) {
+        x.classList.toggle('on', x.dataset.v === (ST.body === '1' ? 'on' : 'off'));
+      });
+    }).catch(function (err) {
+      $('verline').textContent = '读不到模块状态：' + err.message;
+    });
+  }
+
+  function guard(p) {
+    if (busy) return Promise.resolve();
+    busy = true;
+    document.querySelectorAll('button').forEach(function (b) { b.disabled = true; });
+    return p.catch(function (e) { setLog('失败：' + e.message); toast('失败：' + e.message); })
+      .then(function () {
+        busy = false;
+        document.querySelectorAll('button').forEach(function (b) { b.disabled = false; });
+      });
+  }
+
+  function setState(key, val) {
+    return guard(sh('sh ' + MOD + '/scripts/set-state.sh ' + key + ' ' + val)
+      .then(function (out) {
+        setLog(out);
+        toast(val === 'on' ? '已开启，重启后生效' : '已关闭，重启后生效');
+        return refresh();
+      }));
+  }
+
+  // ---------- 事件 ----------
+  $('seg-emoji').addEventListener('click', function (ev) {
+    var btn = ev.target.closest('button');
+    if (!btn || btn.classList.contains('on')) return;
+    setState('emoji', btn.dataset.v);
+  });
+
+  $('seg-body').addEventListener('click', function (ev) {
+    var btn = ev.target.closest('button');
+    if (!btn || btn.classList.contains('on')) return;
+    if (btn.dataset.v === 'on' && !confirm('正文 Apple 字体在部分 App 里会导致输入框光标消失。确定打开？')) return;
+    setState('body', btn.dataset.v);
+  });
+
+  $('b-remount').addEventListener('click', function () {
+    guard(sh('sh ' + MOD + '/post-fs-data.sh; echo; tail -n 40 ' + STATE + '/post-fs.log')
+      .then(function (out) {
+        setLog(out);
+        toast('已按当前开关重挂载');
+        return refresh();
+      }));
+  });
+
+  $('b-diag').addEventListener('click', function () {
+    guard(sh('sh ' + MOD + '/scripts/diag.sh /data/local/tmp/chiron_diag.txt; cat /data/local/tmp/chiron_diag.txt')
+      .then(function (out) {
+        setLog(out || '（诊断没有输出）');
+        toast('诊断完成');
+      }));
+  });
+
+  $('b-export').addEventListener('click', function () {
+    var ts = 'chiron-' + new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14) + '.txt';
+    var cmd = [
+      'D=/sdcard/Download/' + ts,
+      '{ echo "== module.prop =="; cat ' + MOD + '/module.prop; echo; echo "== settings =="; cat ' + CONF + ' 2>/dev/null;' +
+      ' echo; echo "== post-fs.log =="; cat ' + STATE + '/post-fs.log 2>/dev/null;' +
+      ' echo; echo "== diag =="; sh ' + MOD + '/scripts/diag.sh /dev/null 2>&1; } > $D 2>/dev/null',
+      'echo SAVED=$D', 'wc -c $D'
+    ].join('; ');
+    guard(sh(cmd).then(function (out) {
+      setLog(out);
+      toast('已导出到 Download/' + ts);
+    }));
+  });
+
+  $('b-reboot').addEventListener('click', function () {
+    if (!confirm('现在重启？')) return;
+    guard(sh('svc power reboot || reboot'));
+  });
+
+  // ---------- 启动 ----------
+  if (!hasBridge()) {
+    $('nobridge').className = 'nobridge';
+    $('nobridge').textContent = '没有检测到 KernelSU 的 WebUI 接口。请在 KernelSU 管理器里打开本模块的 WebUI，而不是用浏览器直接打开这个文件。';
+    document.querySelectorAll('button').forEach(function (b) { b.disabled = true; });
+    $('verline').textContent = '未连接 KernelSU';
+  } else {
+    if (window.ksu.fullScreen) { try { window.ksu.fullScreen(true); } catch (e) {} }
+    refresh();
+  }
+})();
+</script>
+</body>
+</html>

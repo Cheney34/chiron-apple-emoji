@@ -1,6 +1,6 @@
 id=chiron_apple_emoji
 name=Apple Color Emoji (Chiron 配套)
-version=v6.6
-versionCode=12
+version=v6.7
+versionCode=13
 author=Cheney34
-description=Chiron GoRound TC + Merriweather 正文，配 Apple 彩色 emoji（Emoji 17.0 / iOS 26 字形）。6.6 修「装了还是安卓风格」的真凶：6.3–6.5.2 的 emoji 字体只做了 32/45/60 三个档位（38/53/70px），大字号时系统请求 96px / 150px 位图找不到对应 strike，判定该字体不可用，直接回退到系统自带的 AOSP 字形 —— 所以小字号像 iOS、一放大就变安卓。6.6 恢复到 5.0 那版的 32/45/60/82/128 五档（38/53/70/96/150px）。模块 id 沿用 5.x / 6.2 的 chiron_apple_emoji；6.3–6.5 临时用的 chiron_ksu_font 请卸载。
+description=Apple 彩色 emoji（Emoji 17.0 / iOS 26 字形，5 档位图 38/53/70/96/150 px）+ 可选正文 Apple 字体 + KernelSU WebUI。6.7：① 正文字体默认关闭（6.5.1 起合入的可变字体被判定为权重 330，微信/抖音输入框光标消失，默认只换 emoji 即回到 5.0 行为，正文可在 WebUI 里单独开）；② 正文字体静态化并从 cmap 摘掉 U+2194/2195/2640/2642/27A1 —— 这 5 个码位被中文字体当成全角符号占用，导致 🙂‍↕️ 🙂‍↔️ 👩‍⚕️ ➡️ 这类 ZWJ 组合被拆成「彩脸 + 黑白箭头」；③ 新增 webroot WebUI：表情包切换、正文开关、诊断、日志导出。

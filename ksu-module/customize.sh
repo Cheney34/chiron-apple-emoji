@@ -41,8 +41,8 @@ SRC_EMOJI="$MODPATH/system/fonts/NotoColorEmoji.ttf"
 
 ui_print " "
 ui_print "****************************************"
-ui_print "  Chiron × Apple Emoji · 6.6"
-ui_print "  正文 + Emoji 17.0（iOS 26 字形）"
+ui_print "  Chiron x Apple Emoji · 6.7"
+ui_print "  Emoji 17.0（iOS 26 字形）+ 可选正文"
 ui_print "****************************************"
 ui_print " "
 
@@ -160,12 +160,13 @@ else
     ui_print "- 系统默认字体：$TARGET_FONT"
 fi
 
-SRC_BODY="$MODPATH/system/fonts/Roboto-Regular.ttf"
+SRC_BODY="$MODPATH/files/Roboto-Regular.ttf"
 if [ "$TARGET_FONT" != "Roboto-Regular.ttf" ] && [ -f "$SRC_BODY" ]; then
-    mv -f "$SRC_BODY" "$MODPATH/system/fonts/$TARGET_FONT"
-    SRC_BODY="$MODPATH/system/fonts/$TARGET_FONT"
+    mv -f "$SRC_BODY" "$MODPATH/files/$TARGET_FONT"
+    SRC_BODY="$MODPATH/files/$TARGET_FONT"
     ui_print "- 正文字体已重命名为：$TARGET_FONT"
 fi
+ui_print "- 正文字体默认不挂载（6.7 起），需要时在 WebUI 里打开"
 
 # ---------- 2. font_fallback.xml ----------
 # Android 15 起 fonts.xml 已废弃，Minikin 真正读的是 font_fallback.xml
@@ -188,8 +189,8 @@ fi
 
 if [ -n "$FALLBACK" ]; then
     ui_print "- 配置文件：$FALLBACK"
-    mkdir -p "$MODPATH/system/etc"
-    DEST="$MODPATH/system/etc/$(basename "$FALLBACK")"
+    mkdir -p "$MODPATH/files"
+    DEST="$MODPATH/files/font_fallback.xml"
 
     INS=""
     for w in 100 200 300 400 500 600 700 800 900; do
@@ -330,6 +331,18 @@ set_perm "$MODPATH/post-fs-data.sh" 0 0 0755 2>/dev/null
 set_perm "$MODPATH/service.sh"      0 0 0755 2>/dev/null
 set_perm "$MODPATH/action.sh"       0 0 0755 2>/dev/null
 set_perm "$MODPATH/scripts/diag.sh" 0 0 0755 2>/dev/null
+set_perm "$MODPATH/scripts/set-state.sh" 0 0 0755 2>/dev/null
+
+# ---------- 5.5 默认开关（WebUI 读写）----------
+mkdir -p /data/adb/chiron_apple_emoji 2>/dev/null
+CONF=/data/adb/chiron_apple_emoji/settings.conf
+if [ ! -f "$CONF" ]; then
+    printf 'EMOJI=1\nBODY=0\n' > "$CONF"
+    ui_print "- 默认开关：emoji 开 / 正文关"
+    ui_print "  正文可变字体在微信、抖音里会让输入框光标消失，6.7 起默认不换正文"
+else
+    ui_print "- 保留上次的开关：$(tr '\n' ' ' < "$CONF")"
+fi
 
 # ---------- 6. 汇总 ----------
 ui_print " "
@@ -343,6 +356,23 @@ done
 ui_print " "
 ui_print "- 开机后 post-fs-data 会用 bind mount 逐个顶掉系统 emoji 位点"
 ui_print "  （KSU 的 overlay 在本机型不保证生效，bind 是内核行为，不依赖挂载实现）"
+ui_print "- 模块详情页新增 WebUI：表情包切换 / 正文开关 / 诊断 / 日志导出"
 ui_print "- 安装完成，重启生效"
 ui_print "- 重启后无变化：进模块详情点「执行」按钮，会现场挂载并打印诊断"
+ui_print " "
+
+# ---------- 7. 尊重上次的「关掉 emoji」选择 ----------
+# 新包会把 system/fonts/NotoColorEmoji.ttf 带回来，但 KSU 的 overlay 只看目录里有没有
+# 这个文件 —— 所以关掉 emoji 时文件必须挪出 system/fonts，重启才会是系统原厂。
+_E=$(grep -m1 '^EMOJI=' "$CONF" 2>/dev/null | cut -d= -f2)
+if [ "$_E" = "0" ]; then
+    mkdir -p "$MODPATH/files/off" 2>/dev/null
+    _n=0
+    for f in "$MODPATH"/system/fonts/*[Ee]moji*.ttf; do
+        [ -e "$f" ] || continue
+        mv -f "$f" "$MODPATH/files/off/" 2>/dev/null && _n=$((_n + 1))
+    done
+    ui_print "- 上次把 emoji 关掉了，本版安装后保持关闭（挪走 $_n 个文件）"
+    ui_print "  想要 Apple emoji：模块详情页 → WebUI → 表情包切换 → Apple 17.0"
+fi
 ui_print " "

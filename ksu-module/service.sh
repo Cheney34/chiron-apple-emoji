@@ -31,6 +31,13 @@ while [ ! -d /sdcard ] && [ "$j" -lt 60 ]; do sleep 1; j=$((j + 1)); done
 
 EMOJI_SZ=$(stat -c%s "$EMOJI_SRC" 2>/dev/null)
 
+# WebUI 开关：EMOJI=0 表示用户选了系统原厂 emoji，模块不再插手
+EMOJI_ON=1
+CONF=$STATE/settings.conf
+[ -f "$CONF" ] && . "$CONF" 2>/dev/null
+case "$EMOJI_ON" in 0|1) ;; *) EMOJI_ON=1 ;; esac
+log "settings: EMOJI=$EMOJI_ON"
+
 # ── 1. GMS 字体包 ────────────────────────────────────────────────────────────
 if [ -d /data/fonts ]; then
     rm -rf /data/fonts
@@ -38,7 +45,7 @@ if [ -d /data/fonts ]; then
 fi
 
 # ── 2. 主题字体目录 ──────────────────────────────────────────────────────────
-if [ -d /data/system/theme/fonts ] && [ -f "$EMOJI_SRC" ]; then
+if [ -d /data/system/theme/fonts ] && [ -f "$EMOJI_SRC" ] && [ "$EMOJI_ON" = "1" ]; then
     n=0
     for f in /data/system/theme/fonts/*[Ee]moji*.ttf; do
         [ -e "$f" ] || continue
@@ -76,7 +83,7 @@ done
 log "cleared $c font cache files"
 
 # ── 5. 最后再确认一次：还有位点没接管就补 bind ───────────────────────────────
-if [ -f "$EMOJI_SRC" ]; then
+if [ -f "$EMOJI_SRC" ] && [ "$EMOJI_ON" = "1" ]; then
     miss=0
     for T in /system/fonts/*[Ee]moji*.ttf /product/fonts/*[Ee]moji*.ttf \
              /system_ext/fonts/*[Ee]moji*.ttf; do
